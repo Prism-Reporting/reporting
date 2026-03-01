@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Storybook",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:6006",
+      "webRoot": "${workspaceFolder}/apps/storybook/src"
+    },
+    {
+      "name": "Storybook (attach)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}/apps/storybook/src"
+    }
+  ]
+}

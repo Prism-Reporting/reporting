@@ -1,0 +1,161 @@
+/**
+ * Validates a ReportSpec for required fields and referential integrity.
+ */
+export function validateReportSpec(spec) {
+    const errors = [];
+    if (!spec.id?.trim())
+        errors.push("ReportSpec.id is required");
+    if (!spec.title?.trim())
+        errors.push("ReportSpec.title is required");
+    if (!spec.layout)
+        errors.push("ReportSpec.layout is required");
+    if (!spec.dataSources || typeof spec.dataSources !== "object")
+        errors.push("ReportSpec.dataSources must be an object");
+    if (!Array.isArray(spec.filters))
+        errors.push("ReportSpec.filters must be an array");
+    if (!Array.isArray(spec.widgets))
+        errors.push("ReportSpec.widgets must be an array");
+    const dataSourceNames = new Set(Object.keys(spec.dataSources || {}));
+    for (const filter of spec.filters || []) {
+        const f = filter;
+        if (f.dataSource && !dataSourceNames.has(f.dataSource)) {
+            errors.push(`Filter "${filter.id}" references unknown dataSource "${f.dataSource}"`);
+        }
+    }
+    for (const widget of spec.widgets || []) {
+        const w = widget;
+        if (w.dataSource && !dataSourceNames.has(w.dataSource)) {
+            errors.push(`Widget "${widget.id}" references unknown dataSource "${w.dataSource}"`);
+        }
+    }
+    const widgetIds = new Set();
+    for (const widget of spec.widgets || []) {
+        const id = widget.id;
+        if (id && widgetIds.has(id)) {
+            errors.push(`Duplicate widget id "${id}"`);
+        }
+        if (id)
+            widgetIds.add(id);
+    }
+    return {
+        valid: errors.length === 0,
+        errors,
+    };
+}
+/**
+ * Builds params for a dataSource from filterState and filter specs.
+ */
+function buildParamsForDataSource(dataSourceName, spec, filterState) {
+    const params = {};
+    const ds = spec.dataSources[dataSourceName];
+    if (ds?.params) {
+        Object.assign(params, ds.params);
+    }
+    for (const filter of spec.filters) {
+        if (filter.dataSource !== dataSourceName)
+            continue;
+        const filterId = filter.id;
+        const value = filterState[filterId];
+        if (value === undefined || value === null)
+            continue;
+        if (filter.type === "select") {
+            const paramKey = filter.paramKey ?? filterId;
+            params[paramKey] = value;
+        }
+        else if (filter.type === "dateRange") {
+            const range = value;
+            const keyFrom = filter.paramKeyFrom ?? `${filterId}From`;
+            const keyTo = filter.paramKeyTo ?? `${filterId}To`;
+            if (range?.from)
+                params[keyFrom] = range.from;
+            if (range?.to)
+                params[keyTo] = range.to;
+        }
+        else if (filter.type === "search") {
+            const paramKey = filter.paramKey ?? filterId;
+            params[paramKey] = value;
+        }
+    }
+    return params;
+}
+/**
+ * Resolves a ReportSpec into a view-ready ResolvedReport using the DataProvider.
+ */
+export async function resolveReport(spec, dataProvider, filterState = {}) {
+    const validation = validateReportSpec(spec);
+    if (!validation.valid) {
+        throw new Error(`Invalid ReportSpec: ${validation.errors.join("; ")}`);
+    }
+    const dataCache = new Map();
+    const fetchData = async (dataSourceName) => {
+        if (dataCache.has(dataSourceName)) {
+            return dataCache.get(dataSourceName);
+        }
+        const ds = spec.dataSources[dataSourceName];
+        const params = buildParamsForDataSource(dataSourceName, spec, filterState);
+        const result = await dataProvider.runQuery({
+            name: ds.query,
+            params,
+        });
+        const arr = Array.isArray(result) ? result : [result];
+        dataCache.set(dataSourceName, arr);
+        return arr;
+    };
+    const resolvedWidgets = [];
+    for (const widget of spec.widgets) {
+        const rows = (await fetchData(widget.dataSource));
+        if (widget.type === "table") {
+            const tableSpec = widget;
+            resolvedWidgets.push({
+                spec: widget,
+                data: {
+                    type: "table",
+                    data: {
+                        rows,
+                        columns: tableSpec.config.columns.map((c) => ({
+                            key: c.key,
+                            label: c.label,
+                        })),
+                    },
+                },
+            });
+        }
+        else if (widget.type === "barChart") {
+            const chartSpec = widget;
+            resolvedWidgets.push({
+                spec: widget,
+                data: {
+                    type: "barChart",
+                    data: {
+                        data: rows,
+                        categoryKey: chartSpec.config.categoryKey,
+                        valueKey: chartSpec.config.valueKey,
+                    },
+                },
+            });
+        }
+        else if (widget.type === "kpi") {
+            const kpiSpec = widget;
+            const first = rows[0];
+            const raw = first && typeof first === "object" && kpiSpec.config.valueKey in first
+                ? first[kpiSpec.config.valueKey]
+                : rows.length;
+            const value = typeof raw === "number" || typeof raw === "string" ? raw : String(raw ?? "");
+            resolvedWidgets.push({
+                spec: widget,
+                data: {
+                    type: "kpi",
+                    data: {
+                        value,
+                        label: kpiSpec.config.label,
+                    },
+                },
+            });
+        }
+    }
+    return {
+        spec,
+        filterState,
+        widgets: resolvedWidgets,
+    };
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@reporting/core": ["../../packages/core/src"]
+    }
+  },
+  "include": ["src/**/*", ".storybook/**/*"]
+}

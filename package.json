@@ -1,0 +1,16 @@
+{
+  "name": "reporting-platform",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "build": "npm run build -w @reporting/core",
+    "dev": "npm run storybook -w @reporting/storybook",
+    "storybook": "npm run storybook -w @reporting/storybook"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
