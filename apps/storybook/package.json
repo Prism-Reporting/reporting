@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "storybook dev -p 6006",
-    "storybook": "npm run build -w @reporting/core && storybook dev -p 6006",
+    "storybook": "npm run build -w @reporting/core && npm run build -w @reporting/react-ui && storybook dev -p 6006",
     "build": "tsc --noEmit && storybook build"
   },
   "dependencies": {
     "@reporting/core": "*",
+    "@reporting/react-ui": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.10.0"

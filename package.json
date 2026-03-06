@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "build": "npm run build -w @reporting/core",
+    "build": "npm run build -w @reporting/core && npm run build -w @reporting/react-ui",
     "dev": "npm run storybook -w @reporting/storybook",
     "storybook": "npm run storybook -w @reporting/storybook"
   },

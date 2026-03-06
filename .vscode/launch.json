@@ -2,6 +2,42 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Build React Renderer",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "build", "-w", "@reporting/react-ui"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Start Storybook",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "storybook"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Start WF Integration Server",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/../reporting-wf-integration/server.js",
+      "cwd": "${workspaceFolder}/../reporting-wf-integration",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/../reporting-wf-integration/.env"
+    },
+    {
+      "name": "Start WF Integration Client",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev:client"],
+      "cwd": "${workspaceFolder}/../reporting-wf-integration",
+      "console": "integratedTerminal"
+    },
+    {
       "name": "Storybook",
       "type": "chrome",
       "request": "launch",
@@ -14,6 +50,17 @@
       "request": "attach",
       "port": 9222,
       "webRoot": "${workspaceFolder}/apps/storybook/src"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch All",
+      "configurations": [
+        "Start Storybook",
+        "Start WF Integration Server",
+        "Start WF Integration Client"
+      ],
+      "stopAll": true
     }
   ]
 }

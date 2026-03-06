@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { ReportRenderer } from "../components/ReportRenderer";
-import { defaultRegistry } from "../registry";
+import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
 import { workItemsByAssigneeDataProvider } from "../mock-data";
 import type { ReportSpec } from "@reporting/core";
 

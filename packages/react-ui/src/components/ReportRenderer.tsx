@@ -1,31 +1,59 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { ReportSpec, DataProvider } from "@reporting/core";
 import { resolveReport } from "@reporting/core";
 import type { ComponentRegistry, ResolvedReport } from "@reporting/core";
+
+const DEFAULT_PAGE_SIZE = 20;
 
 export interface ReportRendererProps {
   spec: ReportSpec;
   dataProvider: DataProvider;
   registry: ComponentRegistry;
+  /** Optional page size for pagination (default 20). Omit or set to 0 to disable pagination. */
+  pageSize?: number;
 }
 
 export function ReportRenderer({
   spec,
   dataProvider,
   registry,
+  pageSize: pageSizeProp = DEFAULT_PAGE_SIZE,
 }: ReportRendererProps) {
   const [filterState, setFilterState] = useState<Record<string, unknown>>({});
   const [resolved, setResolved] = useState<ResolvedReport | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const handleFilterChange = useCallback((filterId: string, value: unknown) => {
     setFilterState((prev) => ({ ...prev, [filterId]: value }));
+    setPage(1);
   }, []);
+
+  const pageSize = pageSizeProp > 0 ? pageSizeProp : 0;
+  const paginationEnabled = pageSize > 0;
+
+  const dataProviderWithPagination = useMemo(() => {
+    if (!paginationEnabled) return dataProvider;
+    return {
+      async runQuery(request: { name: string; params?: Record<string, unknown> }) {
+        const params = { ...request.params, page, pageSize };
+        const result = await dataProvider.runQuery({ ...request, params });
+        // Unwrap { data, hasMore } from API so the engine receives a plain array
+        if (result && typeof result === "object" && "data" in result && Array.isArray((result as { data: unknown }).data)) {
+          const obj = result as { data: unknown[]; hasMore?: boolean };
+          if (typeof obj.hasMore === "boolean") setHasMore(obj.hasMore);
+          return obj.data;
+        }
+        return Array.isArray(result) ? result : [result];
+      },
+    };
+  }, [dataProvider, page, pageSize, paginationEnabled]);
 
   useEffect(() => {
     let cancelled = false;
 
-    resolveReport(spec, dataProvider, filterState)
+    resolveReport(spec, dataProviderWithPagination, filterState)
       .then((r) => {
         if (!cancelled) {
           setResolved(r);
@@ -42,7 +70,7 @@ export function ReportRenderer({
     return () => {
       cancelled = true;
     };
-  }, [spec, dataProvider, filterState]);
+  }, [spec, dataProviderWithPagination, filterState]);
 
   const FilterBarComponent = registry.filterBar;
   const TableComponent = registry.table;
@@ -136,6 +164,28 @@ export function ReportRenderer({
             ))}
           </div>
         )}
+
+      {paginationEnabled && (
+        <nav className="report-pagination" aria-label="Pagination">
+          <button
+            type="button"
+            className="report-pagination-prev"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </button>
+          <span className="report-pagination-page">Page {page}</span>
+          <button
+            type="button"
+            className="report-pagination-next"
+            disabled={!hasMore}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </button>
+        </nav>
+      )}
       </div>
     </div>
   );

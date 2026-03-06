@@ -161,3 +161,36 @@
   text-align: center;
   color: #6b7280;
 }
+
+.report-pagination {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.report-pagination-prev,
+.report-pagination-next {
+  padding: 0.35rem 0.75rem;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.report-pagination-prev:hover:not(:disabled),
+.report-pagination-next:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.report-pagination-prev:disabled,
+.report-pagination-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.report-pagination-page {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
