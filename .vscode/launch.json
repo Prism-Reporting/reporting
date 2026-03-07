@@ -2,11 +2,11 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Build: @reporting/react-ui",
+      "name": "Build: @reporting/react-ui (watch)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "build", "-w", "@reporting/react-ui"],
+      "runtimeArgs": ["run", "build:watch", "-w", "@reporting/react-ui"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },

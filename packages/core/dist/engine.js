@@ -200,6 +200,17 @@ export function validateReportSpec(spec, context = {}) {
                         addError(`${path}.config.columns.${columnIndex}.type`, "invalid-table-column-type", `Table column type "${String(column.type)}" is not supported`, 'Use "string", "number", or "date".');
                     }
                 }
+                if (widget.config.groupByKey !== undefined) {
+                    if (!isNonEmptyString(widget.config.groupByKey)) {
+                        addError(`${path}.config.groupByKey`, "invalid-groupByKey", "Table groupByKey must be a non-empty string when present", "Use a row field key to group by (e.g. projectName).");
+                    }
+                    else if (queryName && fieldLookup[queryName]) {
+                        validateFieldReference(`${path}.config.groupByKey`, queryName, widget.config.groupByKey, "Table groupByKey");
+                    }
+                }
+                if (widget.config.groupLabelKey !== undefined && !isNonEmptyString(widget.config.groupLabelKey)) {
+                    addError(`${path}.config.groupLabelKey`, "invalid-groupLabelKey", "Table groupLabelKey must be a non-empty string when present", "Use a row field key for the group header label, or omit to use group value.");
+                }
                 break;
             }
             case "barChart":
@@ -269,12 +280,18 @@ export async function resolveReport(spec, dataProvider, filterState = {}) {
         throw new Error(`Invalid ReportSpec: ${validation.errors.join("; ")}`);
     }
     const dataCache = new Map();
+    const resolvedQueries = new Map();
     const fetchData = async (dataSourceName) => {
         if (dataCache.has(dataSourceName)) {
             return dataCache.get(dataSourceName);
         }
         const ds = spec.dataSources[dataSourceName];
         const params = buildParamsForDataSource(dataSourceName, spec, filterState);
+        resolvedQueries.set(dataSourceName, {
+            dataSource: dataSourceName,
+            query: ds.query,
+            params,
+        });
         const result = await dataProvider.runQuery({
             name: ds.query,
             params,
@@ -288,16 +305,42 @@ export async function resolveReport(spec, dataProvider, filterState = {}) {
         const rows = (await fetchData(widget.dataSource));
         if (widget.type === "table") {
             const tableSpec = widget;
+            const columns = tableSpec.config.columns.map((c) => ({
+                key: c.key,
+                label: c.label,
+            }));
+            const groupByKey = tableSpec.config.groupByKey;
+            let groups;
+            if (groupByKey && groupByKey.trim() !== "") {
+                const labelKey = (tableSpec.config.groupLabelKey?.trim() || groupByKey);
+                const map = new Map();
+                for (const row of rows) {
+                    const key = row[groupByKey];
+                    const groupKey = key === undefined || key === null ? "\0" : String(key);
+                    let list = map.get(groupKey);
+                    if (!list) {
+                        map.set(groupKey, (list = []));
+                    }
+                    list.push(row);
+                }
+                groups = [];
+                for (const [groupKey, groupRows] of map.entries()) {
+                    if (groupRows.length === 0)
+                        continue;
+                    const label = groupKey === "\0"
+                        ? "—"
+                        : (groupRows[0][labelKey] != null ? String(groupRows[0][labelKey]) : groupKey);
+                    groups.push({ label, rows: groupRows });
+                }
+            }
             resolvedWidgets.push({
                 spec: widget,
                 data: {
                     type: "table",
                     data: {
                         rows,
-                        columns: tableSpec.config.columns.map((c) => ({
-                            key: c.key,
-                            label: c.label,
-                        })),
+                        columns,
+                        ...(groups && groups.length > 0 ? { groups } : {}),
                     },
                 },
             });
@@ -338,6 +381,7 @@ export async function resolveReport(spec, dataProvider, filterState = {}) {
     return {
         spec,
         filterState,
+        queries: Array.from(resolvedQueries.values()),
         widgets: resolvedWidgets,
     };
 }

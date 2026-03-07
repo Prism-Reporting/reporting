@@ -124,6 +124,7 @@ export function ReportRenderer({
                 <ReportWidget
                   key={w.spec.id}
                   widget={w}
+                  queryInfo={resolved.queries.find((query) => query.dataSource === w.spec.dataSource)}
                   registry={{
                     table: TableComponent,
                     barChart: BarChartComponent,
@@ -138,6 +139,7 @@ export function ReportRenderer({
                 <ReportWidget
                   key={w.spec.id}
                   widget={w}
+                  queryInfo={resolved.queries.find((query) => query.dataSource === w.spec.dataSource)}
                   registry={{
                     table: TableComponent,
                     barChart: BarChartComponent,
@@ -154,6 +156,7 @@ export function ReportRenderer({
               <ReportWidget
                 key={w.spec.id}
                 widget={w}
+                queryInfo={resolved.queries.find((query) => query.dataSource === w.spec.dataSource)}
                 registry={{
                   table: TableComponent,
                   barChart: BarChartComponent,
@@ -193,9 +196,11 @@ export function ReportRenderer({
 
 function ReportWidget({
   widget,
+  queryInfo,
   registry,
 }: {
   widget: ResolvedReport["widgets"][0];
+  queryInfo?: ResolvedReport["queries"][0];
   registry: ComponentRegistry;
 }) {
   const { spec, data } = widget;
@@ -205,6 +210,7 @@ function ReportWidget({
       <registry.table
         title={spec.title}
         data={data.data}
+        queryInfo={queryInfo}
       />
     );
   }
@@ -213,6 +219,7 @@ function ReportWidget({
       <registry.barChart
         title={spec.title}
         data={data.data}
+        queryInfo={queryInfo}
       />
     );
   }
@@ -221,6 +228,7 @@ function ReportWidget({
       <registry.kpi
         title={spec.title}
         data={data.data}
+        queryInfo={queryInfo}
       />
     );
   }

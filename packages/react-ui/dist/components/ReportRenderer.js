@@ -64,33 +64,33 @@ export function ReportRenderer({ spec, dataProvider, registry, pageSize: pageSiz
     const layout = spec.layout;
     const isTwoColumn = layout === "twoColumn";
     const half = Math.ceil(resolved.widgets.length / 2);
-    return (_jsxs("div", { className: "report-container", "data-report-id": spec.id, children: [_jsx("header", { className: "report-header", children: _jsx("h1", { className: "report-title", children: spec.title }) }), spec.filters.length > 0 && (_jsx("div", { className: "report-filters", children: _jsx(FilterBarComponent, { filters: spec.filters, filterState: filterState, onFilterChange: handleFilterChange }) })), _jsxs("div", { className: `report-main report-layout-${layout}`, "data-layout": layout, children: [isTwoColumn ? (_jsxs("div", { className: "report-grid report-grid-two", children: [_jsx("div", { className: "report-column", children: resolved.widgets.slice(0, half).map((w) => (_jsx(ReportWidget, { widget: w, registry: {
+    return (_jsxs("div", { className: "report-container", "data-report-id": spec.id, children: [_jsx("header", { className: "report-header", children: _jsx("h1", { className: "report-title", children: spec.title }) }), spec.filters.length > 0 && (_jsx("div", { className: "report-filters", children: _jsx(FilterBarComponent, { filters: spec.filters, filterState: filterState, onFilterChange: handleFilterChange }) })), _jsxs("div", { className: `report-main report-layout-${layout}`, "data-layout": layout, children: [isTwoColumn ? (_jsxs("div", { className: "report-grid report-grid-two", children: [_jsx("div", { className: "report-column", children: resolved.widgets.slice(0, half).map((w) => (_jsx(ReportWidget, { widget: w, queryInfo: resolved.queries.find((query) => query.dataSource === w.spec.dataSource), registry: {
                                         table: TableComponent,
                                         barChart: BarChartComponent,
                                         kpi: KpiComponent,
                                         filterBar: FilterBarComponent,
-                                    } }, w.spec.id))) }), _jsx("div", { className: "report-column", children: resolved.widgets.slice(half).map((w) => (_jsx(ReportWidget, { widget: w, registry: {
+                                    } }, w.spec.id))) }), _jsx("div", { className: "report-column", children: resolved.widgets.slice(half).map((w) => (_jsx(ReportWidget, { widget: w, queryInfo: resolved.queries.find((query) => query.dataSource === w.spec.dataSource), registry: {
                                         table: TableComponent,
                                         barChart: BarChartComponent,
                                         kpi: KpiComponent,
                                         filterBar: FilterBarComponent,
-                                    } }, w.spec.id))) })] })) : (_jsx("div", { className: "report-column", children: resolved.widgets.map((w) => (_jsx(ReportWidget, { widget: w, registry: {
+                                    } }, w.spec.id))) })] })) : (_jsx("div", { className: "report-column", children: resolved.widgets.map((w) => (_jsx(ReportWidget, { widget: w, queryInfo: resolved.queries.find((query) => query.dataSource === w.spec.dataSource), registry: {
                                 table: TableComponent,
                                 barChart: BarChartComponent,
                                 kpi: KpiComponent,
                                 filterBar: FilterBarComponent,
                             } }, w.spec.id))) })), paginationEnabled && (_jsxs("nav", { className: "report-pagination", "aria-label": "Pagination", children: [_jsx("button", { type: "button", className: "report-pagination-prev", disabled: page <= 1, onClick: () => setPage((p) => Math.max(1, p - 1)), children: "Previous" }), _jsxs("span", { className: "report-pagination-page", children: ["Page ", page] }), _jsx("button", { type: "button", className: "report-pagination-next", disabled: !hasMore, onClick: () => setPage((p) => p + 1), children: "Next" })] }))] })] }));
 }
-function ReportWidget({ widget, registry, }) {
+function ReportWidget({ widget, queryInfo, registry, }) {
     const { spec, data } = widget;
     if (data.type === "table") {
-        return (_jsx(registry.table, { title: spec.title, data: data.data }));
+        return (_jsx(registry.table, { title: spec.title, data: data.data, queryInfo: queryInfo }));
     }
     if (data.type === "barChart") {
-        return (_jsx(registry.barChart, { title: spec.title, data: data.data }));
+        return (_jsx(registry.barChart, { title: spec.title, data: data.data, queryInfo: queryInfo }));
     }
     if (data.type === "kpi") {
-        return (_jsx(registry.kpi, { title: spec.title, data: data.data }));
+        return (_jsx(registry.kpi, { title: spec.title, data: data.data, queryInfo: queryInfo }));
     }
     return null;
 }

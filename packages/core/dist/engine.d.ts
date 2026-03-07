@@ -24,6 +24,11 @@ export interface ResolvedTableData {
         key: string;
         label: string;
     }>;
+    /** When table has groupByKey, rows are grouped; UI renders one section per group. */
+    groups?: Array<{
+        label: string;
+        rows: Record<string, unknown>[];
+    }>;
 }
 export interface ResolvedBarChartData {
     data: Array<Record<string, unknown>>;
@@ -48,9 +53,15 @@ export interface ResolvedWidget {
     spec: WidgetSpec;
     data: ResolvedWidgetData;
 }
+export interface ResolvedQueryExecution {
+    dataSource: string;
+    query: string;
+    params: Record<string, unknown>;
+}
 export interface ResolvedReport {
     spec: ReportSpec;
     filterState: Record<string, unknown>;
+    queries: ResolvedQueryExecution[];
     widgets: ResolvedWidget[];
 }
 /**

@@ -1,1 +1,1 @@
-{"version":3,"file":"BarChartView.d.ts","sourceRoot":"","sources":["../../src/components/BarChartView.tsx"],"names":[],"mappings":"AAUA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AAWrD,wBAAgB,YAAY,CAAC,EAAE,KAAK,EAAE,IAAI,EAAE,EAAE,aAAa,2CA6B1D"}
+{"version":3,"file":"BarChartView.d.ts","sourceRoot":"","sources":["../../src/components/BarChartView.tsx"],"names":[],"mappings":"AAUA,OAAO,KAAK,EAAE,aAAa,EAAE,MAAM,iBAAiB,CAAC;AAYrD,wBAAgB,YAAY,CAAC,EAAE,KAAK,EAAE,IAAI,EAAE,SAAS,EAAE,EAAE,aAAa,2CA6BrE"}

@@ -48,6 +48,10 @@ export interface TableWidgetConfig {
     label: string;
     type?: "string" | "number" | "date";
   }>;
+  /** When set, rows are grouped by this key; resolved data will include a `groups` array. */
+  groupByKey?: string;
+  /** Optional key to use for group header label; defaults to the group key value. */
+  groupLabelKey?: string;
 }
 
 export interface BarChartWidgetConfig {

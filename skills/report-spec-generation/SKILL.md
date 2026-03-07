@@ -18,7 +18,7 @@ Generate a **ReportSpec** (JSON) from a natural language description. The output
   - **dateRange**: `type: "dateRange"`, optional `paramKeyFrom`, `paramKeyTo`.
   - **search**: `type: "search"`, optional `paramKey`, `placeholder`.
 - **widgets** (array): One or more widget specs. Each has `type`, `id`, `dataSource`, optional `title`, and `config`:
-  - **table**: `type: "table"`, `config: { columns: [{ key, label, type? }] }` (type is `"string"` | `"number"` | `"date"`).
+  - **table**: `type: "table"`, `config: { columns: [{ key, label, type? }], groupByKey?, groupLabelKey? }` (type is `"string"` | `"number"` | `"date"`). Use optional `groupByKey` (e.g. `"projectName"`) to group rows; use `groupLabelKey` for the section header label or omit to use the group value.
   - **barChart**: `type: "barChart"`, `config: { categoryKey, valueKey, series? }`.
   - **kpi**: `type: "kpi"`, `config: { valueKey, label?, format? }` (format is `"number"` | `"percent"` | `"currency"`).
 

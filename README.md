@@ -52,7 +52,7 @@ pnpm run storybook
 3. Implement **DataProvider** and pass it to the engine’s `resolveReport`.
 4. Render the resolved report with the React UI components.
 
-The [reporting-workfront-example](https://github.com/Prism-Reporting/reporting-workfront-example) repo shows an integration using the Adobe Workfront API as the data source; it is optional and not required for the core renderer.
+The [reporting-portfolio-example](https://github.com/Prism-Reporting/reporting-portfolio-example) repo is the primary fallback demo: it uses mocked project-portfolio data so the reporting flow is easy to understand without external system knowledge. The [reporting-workfront-example](https://github.com/Prism-Reporting/reporting-workfront-example) repo remains the advanced example for a real Adobe Workfront integration.
 
 ## Documentation
 

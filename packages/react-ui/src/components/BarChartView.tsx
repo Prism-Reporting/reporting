@@ -9,6 +9,7 @@ import {
   Cell,
 } from "recharts";
 import type { BarChartProps } from "@reporting/core";
+import { WidgetHeader } from "./WidgetHeader.js";
 
 const COLORS = [
   "#3b82f6",
@@ -19,12 +20,12 @@ const COLORS = [
   "#ec4899",
 ];
 
-export function BarChartView({ title, data }: BarChartProps) {
+export function BarChartView({ title, data, queryInfo }: BarChartProps) {
   const { data: chartData, categoryKey, valueKey } = data;
 
   return (
     <div className="report-widget report-bar-chart" data-testid="bar-chart-widget">
-      {title && <h3 className="report-widget-title">{title}</h3>}
+      <WidgetHeader title={title} queryInfo={queryInfo} />
       <div className="report-chart-container">
         <ResponsiveContainer width="100%" height={300}>
           <RechartsBarChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>

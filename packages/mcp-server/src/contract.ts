@@ -47,9 +47,9 @@ export const supportedFilters = [
 export const supportedWidgets = [
   {
     type: "table",
-    description: "Tabular widget for row-oriented query results.",
+    description: "Tabular widget for row-oriented query results. Optional groupByKey (e.g. projectName) groups rows; groupLabelKey sets section header label.",
     requiredFields: ["type", "id", "dataSource", "config.columns"],
-    optionalFields: ["title"],
+    optionalFields: ["title", "config.groupByKey", "config.groupLabelKey"],
   },
   {
     type: "barChart",
@@ -101,7 +101,7 @@ Each data source value is:
 
 ## Widgets
 
-- \`table\`: \`config.columns = [{ key, label, type? }]\`
+- \`table\`: \`config.columns = [{ key, label, type? }]\`; optional \`config.groupByKey\` (e.g. \`projectName\`) to group rows into sections, optional \`config.groupLabelKey\` for section header
 - \`barChart\`: \`config.categoryKey\`, \`config.valueKey\`
 - \`kpi\`: \`config.valueKey\`, optional \`config.label\` and \`config.format\`
 
@@ -241,6 +241,14 @@ const reportSpecJsonSchema = {
                         },
                       },
                     },
+                  },
+                  groupByKey: {
+                    type: "string",
+                    description: "Row field key to group by; resolved table will have groups.",
+                  },
+                  groupLabelKey: {
+                    type: "string",
+                    description: "Row field key for group section label; defaults to group value.",
                   },
                 },
               },
