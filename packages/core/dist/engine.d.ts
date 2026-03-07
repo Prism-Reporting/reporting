@@ -1,8 +1,22 @@
 import type { ReportSpec, WidgetSpec } from "./types";
 import type { DataProvider } from "./data-provider";
+export declare const REPORT_SPEC_VERSION: "v1";
+export interface ValidationDiagnostic {
+    path: string;
+    code: string;
+    message: string;
+    severity: "error";
+    suggestion?: string;
+}
+export interface ValidationContext {
+    availableQueries?: string[];
+    availableFields?: Record<string, string[]>;
+}
 export interface ValidationResult {
+    version: typeof REPORT_SPEC_VERSION;
     valid: boolean;
     errors: string[];
+    diagnostics: ValidationDiagnostic[];
 }
 export interface ResolvedTableData {
     rows: Record<string, unknown>[];
@@ -42,7 +56,7 @@ export interface ResolvedReport {
 /**
  * Validates a ReportSpec for required fields and referential integrity.
  */
-export declare function validateReportSpec(spec: ReportSpec): ValidationResult;
+export declare function validateReportSpec(spec: ReportSpec, context?: ValidationContext): ValidationResult;
 /**
  * Resolves a ReportSpec into a view-ready ResolvedReport using the DataProvider.
  */

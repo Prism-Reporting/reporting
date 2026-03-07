@@ -60,8 +60,20 @@ interface DataProvider {
 
 ## Engine
 
-- `validateReportSpec(spec)`: Returns `{ valid, errors }`.
+- `validateReportSpec(spec, context?)`: Returns `{ version, valid, errors, diagnostics }`.
 - `resolveReport(spec, dataProvider, filterState?)`: Validates, runs queries with merged filter params, returns `ResolvedReport`.
+
+`validateReportSpec` supports optional grounding context:
+
+- `availableQueries?: string[]`
+- `availableFields?: Record<string, string[]>`
+
+When grounding context is provided, the validator can also catch:
+
+- unknown `dataSource.query` values
+- unknown widget field references for the selected query
+- invalid enum-like values and missing type-specific config
+- duplicate filter ids in addition to duplicate widget ids
 
 ## Component Registry
 
