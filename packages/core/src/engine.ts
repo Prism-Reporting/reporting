@@ -10,6 +10,7 @@ import type {
 import type { DataProvider } from "./data-provider";
 
 export const REPORT_SPEC_VERSION = "v1" as const;
+const KPI_COUNT_VALUE_KEY = "_count";
 
 export interface ValidationDiagnostic {
   path: string;
@@ -114,7 +115,8 @@ export function validateReportSpec(
     path: string,
     queryName: string | undefined,
     fieldName: unknown,
-    label: string
+    label: string,
+    options: { allowSyntheticCount?: boolean } = {}
   ) => {
     if (!isNonEmptyString(fieldName)) {
       addError(
@@ -123,6 +125,10 @@ export function validateReportSpec(
         `${label} must be a non-empty string`,
         "Provide a field key that exists in the referenced query output."
       );
+      return;
+    }
+
+    if (options.allowSyntheticCount && fieldName === KPI_COUNT_VALUE_KEY) {
       return;
     }
 
@@ -531,7 +537,8 @@ export function validateReportSpec(
           `${path}.config.valueKey`,
           queryName,
           widget.config.valueKey,
-          "KPI valueKey"
+          "KPI valueKey",
+          { allowSyntheticCount: true }
         );
         if (
           widget.config.format !== undefined &&
@@ -703,9 +710,11 @@ export async function resolveReport(
       const kpiSpec = widget as KpiWidgetSpec;
       const first = rows[0];
       const raw =
-        first && typeof first === "object" && kpiSpec.config.valueKey in first
-          ? (first as Record<string, unknown>)[kpiSpec.config.valueKey]
-          : rows.length;
+        kpiSpec.config.valueKey === KPI_COUNT_VALUE_KEY
+          ? rows.length
+          : first && typeof first === "object" && kpiSpec.config.valueKey in first
+            ? (first as Record<string, unknown>)[kpiSpec.config.valueKey]
+            : "";
       const value: number | string =
         typeof raw === "number" || typeof raw === "string" ? raw : String(raw ?? "");
       resolvedWidgets.push({

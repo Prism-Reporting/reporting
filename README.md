@@ -58,6 +58,7 @@ The [reporting-portfolio-example](https://github.com/Prism-Reporting/reporting-p
 
 - [packages/core/README.md](packages/core/README.md) — ReportSpec schema, filter/widget variants, DataProvider, engine API.
 - [docs/natural-language-to-spec-examples.md](docs/natural-language-to-spec-examples.md) — Example mappings from natural language to ReportSpec (for future AI tooling).
+- [docs/product-vision.md](docs/product-vision.md) — Project intent, open source posture, and business model direction.
 - [docs/GITHUB_ORG_SETUP.md](docs/GITHUB_ORG_SETUP.md) — Prism-Reporting org and repo setup.
 
 ## Topics

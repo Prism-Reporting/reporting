@@ -7,10 +7,18 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
+    "./http": { "types": "./dist/http.d.ts", "default": "./dist/http.js" },
+    "./schemas": { "types": "./dist/schemas.d.ts", "default": "./dist/schemas.js" },
+    "./build-report-tool": { "types": "./dist/build-report-tool.d.ts", "default": "./dist/build-report-tool.js" },
+    "./format-report-spec": { "types": "./dist/format-report-spec.d.ts", "default": "./dist/format-report-spec.js" }
+  },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "npm run build && node --test test/*.test.js"
   },
   "dependencies": {
     "@reporting/core": "*",

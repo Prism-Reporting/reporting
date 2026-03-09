@@ -17,15 +17,13 @@ MCP server that exposes tools for Prism Reporting:
 
 ## Setup
 
-1. Run the server over stdio (for Claude Desktop, Cursor, or other MCP clients):
+1. Run the server over HTTP:
 
 ```bash
 npm start
-# or
-node dist/index.js
 ```
 
-Configure your MCP client to run this command (e.g. in Cursor MCP settings or Claude Desktop config).
+By default the server listens on `http://127.0.0.1:7071/mcp`. Override the port with `REPORTING_MCP_PORT`.
 
 ## Resources
 
@@ -64,9 +62,57 @@ The server publishes versioned resources under `report-spec://v1/...`:
   - `name` (string): Query name to inspect.
   - Returns the query definition, including fields and params when available.
 
-## Query Catalog Configuration
+## Session Host Context
 
-To ground report generation against real tenant data, publish a query catalog with one of these environment variables:
+Query metadata is session-scoped. The **preferred integration** is to pass a **reporting context provider** (`ReportingContextProvider` from `@reporting/core`) when creating the session manager or standalone server. The MCP layer then obtains base context (and optional semantic context) from the provider for each new session and uses it for the query catalog resource, `list_available_queries`, `describe_query`, and validation defaults for `validate_report_spec`. Validation rules are driven by **base context only**; semantic context is for agent grounding and does not change validation.
+
+**Preferred (context provider):**
+
+```ts
+import { createReportingMcpSessionManager } from "@reporting/mcp-server";
+import type { ReportingContextProvider } from "@reporting/core";
+
+const provider: ReportingContextProvider = {
+  getBaseContext: async () => ({ source: "my-app", queries: [...] }),
+  getSemanticContext: async () => ({ queryAliases: [], examples: [] }) ?? null,
+};
+
+const sessionManager = createReportingMcpSessionManager({
+  contextProvider: provider,
+  // optional: getContextProviderInput: (req) => ({ tenantId: req.headers["x-tenant-id"] }),
+});
+```
+
+**Legacy / fallback:** The `x-reporting-host-context` header is **deprecated**. It is only used when no context provider is supplied (or when the provider fails). **Migration:** Implement a `ReportingContextProvider` (from `@reporting/core`) that returns the same base—and optional semantic—context you previously sent in the header, and pass it as `contextProvider` to `createReportingMcpSessionManager` or `startStandaloneReportingMcpHttpServer`.
+
+Expected header shape (legacy):
+
+```json
+{
+  "source": "reporting-starter-example",
+  "tenantId": "demo-tenant",
+  "queryCatalog": {
+    "queries": [
+      {
+        "name": "tasks",
+        "description": "List tasks for reporting",
+        "fields": ["name", "status", "owner", "dueDate"],
+        "params": ["status", "dueFrom", "dueTo"]
+      }
+    ]
+  }
+}
+```
+
+When session context is present (from provider or legacy header):
+
+- `report-spec://v1/query-catalog` reflects that session's query metadata
+- `list_available_queries` and `describe_query` resolve against that session's catalog
+- `validate_report_spec` uses the session catalog as its default validation context (base context only)
+
+## Query Catalog Fallback
+
+For local standalone development, the server still supports environment-variable fallback when no session host context is provided:
 
 - `REPORTING_QUERY_CATALOG_JSON`: Inline JSON string.
 - `REPORTING_QUERY_CATALOG_PATH`: Path to a JSON file on disk.

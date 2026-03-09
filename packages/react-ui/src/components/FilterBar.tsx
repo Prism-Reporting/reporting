@@ -21,9 +21,9 @@ function SelectFilterControl({
         onChange={(e) => onChange(e.target.value || undefined)}
       >
         <option value="">All</option>
-        {filter.options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
+        {(filter.options ?? []).map((opt, i) => (
+          <option key={opt?.value ?? `opt-${i}`} value={opt?.value ?? ""}>
+            {opt?.label ?? opt?.value ?? ""}
           </option>
         ))}
       </select>
@@ -96,11 +96,12 @@ export function FilterBar({
   filterState,
   onFilterChange,
 }: FilterBarProps) {
-  if (filters.length === 0) return null;
+  const list = filters ?? [];
+  if (list.length === 0) return null;
 
   return (
     <div className="report-filter-bar" data-testid="filter-bar">
-      {filters.map((filter) => {
+      {list.map((filter) => {
         const value = filterState[filter.id];
 
         if (filter.type === "select") {

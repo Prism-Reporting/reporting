@@ -1,4 +1,5 @@
 export const REPORT_SPEC_VERSION = "v1";
+const KPI_COUNT_VALUE_KEY = "_count";
 /**
  * Validates a ReportSpec for required fields and referential integrity.
  */
@@ -21,9 +22,12 @@ export function validateReportSpec(spec, context = {}) {
     };
     const isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
     const isNonEmptyString = (value) => typeof value === "string" && value.trim().length > 0;
-    const validateFieldReference = (path, queryName, fieldName, label) => {
+    const validateFieldReference = (path, queryName, fieldName, label, options = {}) => {
         if (!isNonEmptyString(fieldName)) {
             addError(path, "missing-field-reference", `${label} must be a non-empty string`, "Provide a field key that exists in the referenced query output.");
+            return;
+        }
+        if (options.allowSyntheticCount && fieldName === KPI_COUNT_VALUE_KEY) {
             return;
         }
         if (!queryName)
@@ -218,7 +222,7 @@ export function validateReportSpec(spec, context = {}) {
                 validateFieldReference(`${path}.config.valueKey`, queryName, widget.config.valueKey, "Bar chart valueKey");
                 break;
             case "kpi":
-                validateFieldReference(`${path}.config.valueKey`, queryName, widget.config.valueKey, "KPI valueKey");
+                validateFieldReference(`${path}.config.valueKey`, queryName, widget.config.valueKey, "KPI valueKey", { allowSyntheticCount: true });
                 if (widget.config.format !== undefined &&
                     !["number", "percent", "currency"].includes(String(widget.config.format))) {
                     addError(`${path}.config.format`, "invalid-kpi-format", `KPI format "${String(widget.config.format)}" is not supported`, 'Use "number", "percent", or "currency".');
@@ -362,9 +366,11 @@ export async function resolveReport(spec, dataProvider, filterState = {}) {
         else if (widget.type === "kpi") {
             const kpiSpec = widget;
             const first = rows[0];
-            const raw = first && typeof first === "object" && kpiSpec.config.valueKey in first
-                ? first[kpiSpec.config.valueKey]
-                : rows.length;
+            const raw = kpiSpec.config.valueKey === KPI_COUNT_VALUE_KEY
+                ? rows.length
+                : first && typeof first === "object" && kpiSpec.config.valueKey in first
+                    ? first[kpiSpec.config.valueKey]
+                    : "";
             const value = typeof raw === "number" || typeof raw === "string" ? raw : String(raw ?? "");
             resolvedWidgets.push({
                 spec: widget,

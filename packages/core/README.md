@@ -75,6 +75,32 @@ When grounding context is provided, the validator can also catch:
 - invalid enum-like values and missing type-specific config
 - duplicate filter ids in addition to duplicate widget ids
 
+## Reporting context contract
+
+Shared types for **base** and **semantic** reporting context, and the **context provider** interface, are exported from `@reporting/core`. Both the MCP package and application code (e.g. starter example) can use these types.
+
+### Base reporting context
+
+- **`BaseReportingContext`**: `source?`, `tenantId?`, `queries: QueryCatalogEntry[]`
+- **`QueryCatalogEntry`**: `name`, `description?`, `fields?`, `params?`, `notes?`
+
+Base context drives deterministic validation and runtime behavior (e.g. `validateReportSpec` grounding).
+
+### Semantic reporting context (optional)
+
+- **`SemanticReportingContext`**: `queryAliases?`, `fieldAliases?`, `examples?`, `clarificationHints?`
+- Element types: `QueryAliasEntry`, `FieldAliasEntry`, `SemanticExampleEntry`, `ClarificationHintEntry`
+
+Semantic context is for AI grounding only; it must not redefine validation rules.
+
+### Context provider interface
+
+- **`ReportingContextProvider`**:
+  - **`getBaseContext(input?)`**: `Promise<BaseReportingContext>` (required)
+  - **`getSemanticContext(input?)`**: `Promise<SemanticReportingContext | null>` (optional method)
+
+Implementations may be local (e.g. starter reading from query catalog) or remote. The MCP server and app both consume context via this provider.
+
 ## Component Registry
 
 The `ComponentRegistry` interface maps primitives (table, barChart, kpi, filterBar) to React components. Hosts can provide custom implementations (e.g., Ant Design, MUI) without changing the spec.

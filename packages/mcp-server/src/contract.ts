@@ -1,16 +1,29 @@
 import { readFileSync } from "node:fs";
-import { REPORT_SPEC_VERSION, type ValidationContext } from "@reporting/core";
+import {
+  REPORT_SPEC_VERSION,
+  type BaseReportingContext,
+  type QueryCatalogEntry,
+  type SemanticReportingContext,
+  type ValidationContext,
+} from "@reporting/core";
 
-export interface QueryCatalogEntry {
-  name: string;
-  description?: string;
-  fields?: string[];
-  params?: string[];
+export type { BaseReportingContext, QueryCatalogEntry, SemanticReportingContext };
+
+export interface ReportingHostContext {
+  queryCatalog?: unknown;
+  source?: string;
+  tenantId?: string;
 }
 
-interface QueryCatalogLoadResult {
+export interface NormalizedReportingHostContext {
+  queryCatalog: QueryCatalogEntry[];
+  source?: string;
+  tenantId?: string;
+}
+
+export interface QueryCatalogLoadResult {
   queries: QueryCatalogEntry[];
-  source: "env-json" | "file" | "none";
+  source: "env-json" | "file" | "session" | "none";
   error?: string;
 }
 
@@ -478,7 +491,7 @@ const changelog = {
   ],
 };
 
-const parseQueryCatalog = (input: unknown): QueryCatalogEntry[] => {
+export const parseQueryCatalog = (input: unknown): QueryCatalogEntry[] => {
   if (Array.isArray(input)) {
     return input
       .filter((entry): entry is Record<string, unknown> => typeof entry === "object" && entry !== null)
@@ -523,8 +536,47 @@ const normalizeQueryCatalogEntry = (input: Record<string, unknown>): QueryCatalo
     description: typeof input.description === "string" ? input.description : undefined,
     fields: toStringArray(input.fields),
     params: toStringArray(input.params),
+    notes: typeof input.notes === "string" ? input.notes : undefined,
   };
 };
+
+export function createQueryCatalogLoadResult(
+  input: unknown,
+  source: QueryCatalogLoadResult["source"] = "session"
+): QueryCatalogLoadResult {
+  return {
+    queries: parseQueryCatalog(input),
+    source,
+  };
+}
+
+export function normalizeReportingHostContext(input: unknown): NormalizedReportingHostContext {
+  if (typeof input !== "object" || input === null || Array.isArray(input)) {
+    return {
+      queryCatalog: [],
+    };
+  }
+
+  const record = input as Record<string, unknown>;
+
+  return {
+    queryCatalog: parseQueryCatalog(record.queryCatalog),
+    source: typeof record.source === "string" ? record.source : undefined,
+    tenantId: typeof record.tenantId === "string" ? record.tenantId : undefined,
+  };
+}
+
+/**
+ * Converts base reporting context from a provider into the legacy host context shape.
+ * Used when a ReportingContextProvider is supplied to the session manager.
+ */
+export function baseContextToHostContext(base: BaseReportingContext): ReportingHostContext {
+  return {
+    queryCatalog: { queries: base.queries },
+    source: base.source,
+    tenantId: base.tenantId,
+  };
+}
 
 export function loadQueryCatalogFromEnv(env: NodeJS.ProcessEnv = process.env): QueryCatalogLoadResult {
   const rawJson = env.REPORTING_QUERY_CATALOG_JSON;
@@ -576,12 +628,16 @@ export function buildValidationContext(queryCatalog: QueryCatalogEntry[]): Valid
   };
 }
 
-export function buildQueryCatalogResourceText(queryCatalogResult: QueryCatalogLoadResult): string {
+export function buildQueryCatalogResourceText(
+  queryCatalogResult: QueryCatalogLoadResult,
+  hostContext?: NormalizedReportingHostContext
+): string {
   if (queryCatalogResult.queries.length > 0) {
     return JSON.stringify(
       {
         version: REPORT_SPEC_VERSION,
         source: queryCatalogResult.source,
+        tenantId: hostContext?.tenantId,
         queries: queryCatalogResult.queries,
       },
       null,
@@ -593,6 +649,7 @@ export function buildQueryCatalogResourceText(queryCatalogResult: QueryCatalogLo
     {
       version: REPORT_SPEC_VERSION,
       source: queryCatalogResult.source,
+      tenantId: hostContext?.tenantId,
       queries: [],
       note:
         "No query catalog is configured. Set REPORTING_QUERY_CATALOG_JSON or REPORTING_QUERY_CATALOG_PATH to publish tenant-specific query metadata.",
@@ -613,7 +670,7 @@ export function buildQueryCatalogResourceText(queryCatalogResult: QueryCatalogLo
   );
 }
 
-export function getContractResources(queryCatalogResult: QueryCatalogLoadResult): ContractResource[] {
+export function getStaticContractResources(): ContractResource[] {
   return [
     {
       name: "report-spec-guide",
@@ -671,15 +728,54 @@ export function getContractResources(queryCatalogResult: QueryCatalogLoadResult)
       mimeType: "application/json",
       text: JSON.stringify(changelog, null, 2),
     },
-    {
-      name: "report-spec-query-catalog",
-      uri: `report-spec://${REPORT_SPEC_VERSION}/query-catalog`,
-      title: "Query Catalog",
-      description: "Tenant-specific query metadata used for grounding generated report specs.",
-      mimeType: "application/json",
-      text: buildQueryCatalogResourceText(queryCatalogResult),
-    },
   ];
+}
+
+export function getQueryCatalogResource(
+  queryCatalogResult: QueryCatalogLoadResult,
+  hostContext?: NormalizedReportingHostContext
+): ContractResource {
+  return {
+    name: "report-spec-query-catalog",
+    uri: `report-spec://${REPORT_SPEC_VERSION}/query-catalog`,
+    title: "Query Catalog",
+    description: "Tenant-specific query metadata used for grounding generated report specs.",
+    mimeType: "application/json",
+    text: buildQueryCatalogResourceText(queryCatalogResult, hostContext),
+  };
+}
+
+/**
+ * Builds a read-only resource for optional semantic context (aliases, examples, hints).
+ * For agent grounding only; must not be used to change validation rules.
+ */
+export function getSemanticContextResource(semantic: SemanticReportingContext): ContractResource {
+  return {
+    name: "report-spec-semantic-context",
+    uri: `report-spec://${REPORT_SPEC_VERSION}/semantic-context`,
+    title: "Semantic Context",
+    description:
+      "Optional aliases, examples, and clarification hints for agent grounding. Does not affect validation.",
+    mimeType: "application/json",
+    text: JSON.stringify(
+      {
+        version: REPORT_SPEC_VERSION,
+        queryAliases: semantic.queryAliases ?? [],
+        fieldAliases: semantic.fieldAliases ?? [],
+        examples: semantic.examples ?? [],
+        clarificationHints: semantic.clarificationHints ?? [],
+      },
+      null,
+      2
+    ),
+  };
+}
+
+export function getContractResources(
+  queryCatalogResult: QueryCatalogLoadResult,
+  hostContext?: NormalizedReportingHostContext
+): ContractResource[] {
+  return [...getStaticContractResources(), getQueryCatalogResource(queryCatalogResult, hostContext)];
 }
 
 export function getExampleByPattern(pattern: string) {
