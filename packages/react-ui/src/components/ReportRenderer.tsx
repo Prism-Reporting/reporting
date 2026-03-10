@@ -123,10 +123,7 @@ export function ReportRenderer({
 
       try {
         const partial = await resolveReport(
-          {
-            ...spec,
-            widgets: [widget],
-          },
+          buildPartialReportSpec(spec, [widget.id]),
           {
             async runQuery(request) {
               if (request.execution?.deliveryMode !== "paginatedList") {
@@ -225,10 +222,10 @@ export function ReportRenderer({
         });
 
         void resolveReport(
-          {
-            ...spec,
-            widgets: affectedWidgets,
-          },
+          buildPartialReportSpec(
+            spec,
+            affectedWidgets.map((widget) => widget.id)
+          ),
           dataProvider,
           nextState
         )
@@ -686,7 +683,7 @@ function mergeResolvedSubset(
     return queryByWidgetId.get(query.widgetId) ?? query;
   });
 
-  const mapWidgets = (items?: Array<{ id: string; widgets: ResolvedReport["widgets"] }>) => {
+  const mapWidgets = <T extends { id: string; widgets: ResolvedReport["widgets"] }>(items?: T[]) => {
     if (!items) return items;
     return items.map((item) => ({
       ...item,
@@ -701,6 +698,49 @@ function mergeResolvedSubset(
     queries,
     ...(current.sections ? { sections: mapWidgets(current.sections) } : {}),
     ...(current.tabs ? { tabs: mapWidgets(current.tabs) } : {}),
+  };
+}
+
+function buildPartialReportSpec(spec: ReportSpec, widgetIds: string[]): ReportSpec {
+  const requestedWidgetIds = new Set(widgetIds);
+  const widgets = spec.widgets.filter((widget) => requestedWidgetIds.has(widget.id));
+  const includedWidgetIds = new Set(widgets.map((widget) => widget.id));
+
+  const pruneContainer = <
+    T extends {
+      id: string;
+      widgetIds: string[];
+      groupIds?: string[];
+    },
+  >(
+    containers: T[] | undefined
+  ): T[] | undefined => {
+    if (!containers) return undefined;
+
+    const pruned = containers
+      .map((container) => {
+        const matchingWidgetIds = container.widgetIds.filter((id) => includedWidgetIds.has(id));
+        if (matchingWidgetIds.length === 0) return null;
+        return {
+          ...container,
+          widgetIds: matchingWidgetIds,
+        };
+      })
+      .filter((container): container is T => container !== null);
+
+    return pruned.length > 0 ? pruned : undefined;
+  };
+
+  const tabs = pruneContainer(spec.tabs);
+  const sections = pruneContainer(spec.sections);
+  const groups = pruneContainer(spec.groups);
+
+  return {
+    ...spec,
+    widgets,
+    ...(tabs ? { tabs } : { tabs: undefined }),
+    ...(sections ? { sections } : { sections: undefined }),
+    ...(groups ? { groups } : { groups: undefined }),
   };
 }
 

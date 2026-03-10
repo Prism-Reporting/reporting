@@ -8,6 +8,7 @@ node_modules/
 
 # Build outputs
 dist/
+packages/*/dist/
 *.tsbuildinfo
 
 # Storybook and tooling caches
