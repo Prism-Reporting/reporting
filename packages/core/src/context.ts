@@ -16,10 +16,63 @@ export interface QueryCatalogEntry {
   description?: string;
   /** Field keys returned by this query (used for validation and UI). */
   fields?: string[];
+  /** Optional framework-owned field contract. Hosts can declare row shape here and let fields be inferred. */
+  fieldShape?: Record<string, QueryFieldContract>;
   /** Parameter names this query accepts (e.g. status, dueFrom, dueTo). */
   params?: string[];
+  /** Optional framework-owned parameter contract. Hosts can declare params here and let param names be inferred. */
+  paramShape?: Record<string, QueryParamContract>;
   /** Optional notes for implementers or agent grounding. */
   notes?: string;
+}
+
+export type QueryScalarType = "string" | "number" | "boolean" | "date";
+export type QueryParamType =
+  | QueryScalarType
+  | "string[]"
+  | "number[]"
+  | "boolean[]"
+  | "date[]";
+
+export interface QueryFieldContract {
+  type: QueryScalarType;
+  optional?: boolean;
+  description?: string;
+}
+
+export interface QueryParamContract {
+  type: QueryParamType;
+  optional?: boolean;
+  description?: string;
+}
+
+function toSortedUniqueKeys(
+  keys: string[] | undefined,
+  shape: Record<string, unknown> | undefined
+): string[] | undefined {
+  const explicitKeys = Array.isArray(keys) ? keys.filter((key) => typeof key === "string" && key.length > 0) : [];
+  const shapeKeys =
+    shape && typeof shape === "object"
+      ? Object.keys(shape).filter((key) => typeof key === "string" && key.length > 0)
+      : [];
+  const merged = [...new Set([...explicitKeys, ...shapeKeys])];
+  return merged.length > 0 ? merged : undefined;
+}
+
+export function defineQueryCatalog(
+  queries: QueryCatalogEntry[]
+): { queries: QueryCatalogEntry[] } {
+  return {
+    queries: queries.map((entry) => ({
+      ...entry,
+      ...(toSortedUniqueKeys(entry.fields, entry.fieldShape)
+        ? { fields: toSortedUniqueKeys(entry.fields, entry.fieldShape) }
+        : {}),
+      ...(toSortedUniqueKeys(entry.params, entry.paramShape)
+        ? { params: toSortedUniqueKeys(entry.params, entry.paramShape) }
+        : {}),
+    })),
+  };
 }
 
 // --- Base reporting context ---

@@ -44,7 +44,7 @@ The server publishes versioned resources under `report-spec://v1/...`:
   - `spec` (object): ReportSpec to validate.
   - `availableQueries?` (string[]): Optional query names for validation.
   - `availableFields?` (Record<string, string[]>): Optional field names by query.
-  - Returns `{ version, valid, errors, diagnostics }`.
+  - Returns `{ version, valid, errors, diagnostics }`. When the server is created with a `policy` option (see below), the policy is run after structural validation and any policy errors are merged into the response.
 
 - **list_supported_widgets**
   - Returns supported widget types and required fields.
@@ -61,6 +61,27 @@ The server publishes versioned resources under `report-spec://v1/...`:
 - **describe_query**
   - `name` (string): Query name to inspect.
   - Returns the query definition, including fields and params when available.
+
+## Policy (governance)
+
+When creating the MCP server you can pass an optional **policy** so `validate_report_spec` enforces host rules (e.g. max widgets, allowed query names). Pass a third argument to `createReportingMcpServer`:
+
+```ts
+import { createReportingMcpServer } from "@reporting/mcp-server";
+import type { ReportSpec, PolicyResult } from "@reporting/core";
+
+const policy = (spec: ReportSpec): PolicyResult => {
+  const errors: { code: string; message: string }[] = [];
+  if (spec.widgets.length > 10) {
+    errors.push({ code: "max-widgets", message: "At most 10 widgets allowed." });
+  }
+  return { allowed: errors.length === 0, errors };
+};
+
+const { mcpServer } = createReportingMcpServer(hostContext, semanticContext, { policy });
+```
+
+Policy errors are merged into the validation diagnostics and set `valid: false` when the policy returns `allowed: false`.
 
 ## Session Host Context
 

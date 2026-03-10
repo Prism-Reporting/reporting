@@ -1,11 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { REPORT_SPEC_VERSION, validateReportSpec } from "@reporting/core";
+import {
+  REPORT_SPEC_VERSION,
+  validateReportSpec,
+  type PolicyResult,
+  type ReportSpec,
+} from "@reporting/core";
 import {
   buildValidationContext,
   createQueryCatalogLoadResult,
   getContractResources,
   getExampleByPattern,
+  getReportGenerationRules,
   getSemanticContextResource,
   normalizeReportingHostContext,
   supportedFilters,
@@ -23,10 +29,17 @@ const jsonResult = (payload: unknown) => ({
   ],
 });
 
+export interface ReportingMcpServerOptions {
+  /** Optional policy check; when provided, validate_report_spec runs it after structural validation and merges policy errors into the response. */
+  policy?: (spec: ReportSpec) => PolicyResult;
+}
+
 export function createReportingMcpServer(
   hostContextInput?: ReportingHostContext,
-  semanticContext?: SemanticReportingContext | null
+  semanticContext?: SemanticReportingContext | null,
+  options?: ReportingMcpServerOptions
 ) {
+  const policy = options?.policy;
   const hostContext = normalizeReportingHostContext(hostContextInput);
   const queryCatalogResult = createQueryCatalogLoadResult(
     { queries: hostContext.queryCatalog },
@@ -65,6 +78,23 @@ export function createReportingMcpServer(
   }
 
   mcpServer.registerTool(
+    "get_report_spec_guide",
+    {
+      title: "Get Report Spec Guide",
+      description:
+        "Load the full ReportSpec authoring guide: DSL structure, required fields, data sources, filters, widgets, presets, sections, tabs, and repair loop. Call this first before building or modifying a report so you know exactly how the report must be generated and what each part means.",
+    },
+    async () => ({
+      content: [
+        {
+          type: "text" as const,
+          text: getReportGenerationRules({ queries: queryCatalogResult.queries }),
+        },
+      ],
+    })
+  );
+
+  mcpServer.registerTool(
     "validate_report_spec",
     {
       title: "Validate Report Spec",
@@ -83,30 +113,86 @@ export function createReportingMcpServer(
       },
     },
     async ({ spec, availableQueries, availableFields }) => {
+      const specId =
+        spec != null && typeof spec === "object" && "id" in spec
+          ? (spec as { id?: string }).id
+          : undefined;
+
+      function buildValidationTrace(
+        outcome: "valid" | "invalid",
+        diagnosticCount: number,
+        diagnostics: Array<{ code: string; suggestion?: string }>
+      ) {
+        const trace = {
+          timestamp: new Date().toISOString(),
+          specId,
+          outcome,
+          diagnosticCount,
+        };
+        const repairSuggestions =
+          outcome === "invalid"
+            ? diagnostics
+                .map((d) => d.suggestion)
+                .filter((s): s is string => s != null && s !== "")
+            : undefined;
+        const errorCodeSummary =
+          outcome === "invalid"
+            ? (diagnostics.reduce(
+                (acc, d) => {
+                  acc[d.code] = (acc[d.code] ?? 0) + 1;
+                  return acc;
+                },
+                {} as Record<string, number>
+              ) as Record<string, number>)
+            : undefined;
+        return { trace, repairSuggestions, errorCodeSummary };
+      }
+
       try {
         const validation = validateReportSpec(
-          spec as unknown as import("@reporting/core").ReportSpec,
+          spec as unknown as ReportSpec,
           {
             availableQueries: availableQueries ?? baseValidationContext.availableQueries,
             availableFields: availableFields ?? baseValidationContext.availableFields,
-          }
+          },
+          policy ? { policy } : undefined
         );
-        return jsonResult(validation);
+        const outcome = validation.valid ? ("valid" as const) : ("invalid" as const);
+        const { trace, repairSuggestions, errorCodeSummary } = buildValidationTrace(
+          outcome,
+          validation.diagnostics.length,
+          validation.diagnostics
+        );
+        return jsonResult({
+          ...validation,
+          trace,
+          ...(repairSuggestions != null && { repairSuggestions }),
+          ...(errorCodeSummary != null && { errorCodeSummary }),
+        });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        const diagnostics = [
+          {
+            path: "$",
+            code: "validation-exception",
+            message,
+            severity: "error" as const,
+            suggestion: "Inspect the input payload and retry validation.",
+          },
+        ];
+        const { trace, repairSuggestions, errorCodeSummary } = buildValidationTrace(
+          "invalid",
+          1,
+          diagnostics
+        );
         return jsonResult({
           version: REPORT_SPEC_VERSION,
           valid: false,
           errors: [message],
-          diagnostics: [
-            {
-              path: "$",
-              code: "validation-exception",
-              message,
-              severity: "error",
-              suggestion: "Inspect the input payload and retry validation.",
-            },
-          ],
+          diagnostics,
+          trace,
+          repairSuggestions,
+          errorCodeSummary,
         });
       }
     }

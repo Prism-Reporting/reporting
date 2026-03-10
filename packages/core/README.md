@@ -16,6 +16,11 @@ The ReportSpec is a structured DSL that describes reports. AI tools (future phas
 | `dataSources` | Record<string, DataSourceSpec> | Yes | Named data sources |
 | `filters` | FilterSpec[] | Yes | Filter definitions (may be empty) |
 | `widgets` | WidgetSpec[] | Yes | Visual widgets |
+| `presets` | ReportSpecPreset[] | No | Optional named filter states (e.g. "This quarter"); host applies `preset.filterState`. |
+| `version` | string | No | Optional report version (e.g. "1.0", "2024.03"); exposed on `ResolvedReport.version` for UI display. |
+| `refreshInterval` | number | No | Optional interval in seconds; when set, the **host** should re-call `resolveReport` after that interval (engine does not implement timers). Hosts may cache by spec.id + filterState and TTL. |
+| `owner` | string | No | Optional owner (e.g. user id or email); pass-through for governance and UI (e.g. "Owner: {owner}"). |
+| `author` | string | No | Optional author (e.g. user id or email); pass-through for UI (e.g. "By {author}"). |
 
 ### DataSourceSpec
 
@@ -24,6 +29,7 @@ The ReportSpec is a structured DSL that describes reports. AI tools (future phas
 | `name` | string | Yes | Unique name within the report |
 | `query` | string | Yes | Query identifier (passed to DataProvider.runQuery) |
 | `params` | Record<string, unknown> | No | Static default parameters |
+| `delivery` | `{ mode, pageSize?, maxRows? }` | No | Explicit integration contract. Use `paginatedList` for table/list sources, `fullVisual` for full chart datasets, `summary` for aggregated/KPI sources. |
 
 ### FilterSpec Variants
 
@@ -41,6 +47,15 @@ All filters require: `id`, `label`, `dataSource` (must reference a key in `dataS
 
 All widgets require: `id`, `dataSource`, `config`. `title` is optional.
 
+Sizing hints:
+
+- `width` / `height` are optional CSS size strings such as `100%`, `320px`, or `24rem`.
+- The renderer enforces per-widget minimum sizes even when a smaller hint is provided.
+- Current minimums are exported as `WIDGET_SIZE_CONSTRAINTS` and available through `getWidgetSizeConstraints()`:
+  - table: min `320px` wide, `180px` tall
+  - bar/line/stacked charts: min `320px` wide, `260px` tall
+  - KPI: min `180px` wide, `80px` tall
+
 ### Safe-for-AI Constraints
 
 1. **Referential integrity**: Filter and widget `dataSource` values must exist in `dataSources`.
@@ -54,14 +69,52 @@ The host implements `DataProvider` to provide data. The engine never accesses da
 
 ```typescript
 interface DataProvider {
-  runQuery(request: { name: string; params?: Record<string, unknown> }): Promise<unknown[]>;
+  runQuery(
+    request: {
+      name: string;
+      params?: Record<string, unknown>;
+      execution?: {
+        deliveryMode: "paginatedList" | "fullVisual" | "summary";
+        page?: number;
+        pageSize?: number;
+        maxRows?: number;
+      };
+    }
+  ): Promise<
+    | unknown[]
+    | {
+        kind?: "rows";
+        data: unknown[];
+        totalCount?: number;
+        pagination?: {
+          page: number;
+          pageSize: number;
+          totalCount?: number;
+          hasMore?: boolean;
+        };
+      }
+    | {
+        kind: "limitExceeded";
+        totalCount: number;
+        limit: number;
+        message?: string;
+      }
+  >;
 }
 ```
 
+Framework expectations:
+
+- `paginatedList`: backend should use `execution.page` / `execution.pageSize` and return rows plus pagination metadata.
+- `fullVisual`: backend must not paginate. Return all rows when they fit under `execution.maxRows`; otherwise return `kind: "limitExceeded"` with `totalCount`.
+- `summary`: backend returns already-aggregated rows for KPIs/summary widgets.
+
+When a host returns the object form, the engine preserves pagination or `limitExceeded` metadata on the resolved query so the UI can render table paging controls and explicit “too much data” messages for visuals.
+
 ## Engine
 
-- `validateReportSpec(spec, context?)`: Returns `{ version, valid, errors, diagnostics }`.
-- `resolveReport(spec, dataProvider, filterState?)`: Validates, runs queries with merged filter params, returns `ResolvedReport`.
+- `validateReportSpec(spec, context?, options?)`: Returns `{ version, valid, errors, diagnostics }`. Optional `options.policy(spec)` runs after structural validation; when the policy returns `allowed: false`, policy errors are added to diagnostics and `valid` is set to false. Hosts can supply a policy for governance (e.g. max widgets, allowed query names).
+- `resolveReport(spec, dataProvider, filterState?, options?)`: Validates, runs queries with merged filter params, returns `ResolvedReport`. Optional `options.onAudit(event)` is called with a minimal audit event on success or error so hosts can log to their audit system.
 
 `validateReportSpec` supports optional grounding context:
 
@@ -74,6 +127,24 @@ When grounding context is provided, the validator can also catch:
 - unknown widget field references for the selected query
 - invalid enum-like values and missing type-specific config
 - duplicate filter ids in addition to duplicate widget ids
+
+### Shareable URLs (filter state in URL)
+
+Hosts can persist filter state in the URL so links are shareable. Use:
+
+- **`serializeFilterStateToSearchParams(filterState, spec.filters)`** – returns a query string (e.g. `?status=NEW&dueDateFrom=2024-01-01`) from current filter state.
+- **`parseFilterStateFromSearchParams(search, spec.filters)`** – parses `window.location.search` (or any query string) into `Record<string, unknown>` filter state.
+
+Conventions: single-value filters use the filter `id` as the param key; multiSelect uses the same key with comma-separated values; dateRange/numericRange use `idFrom` and `idTo`. On load, parse the URL and pass the result as initial filter state; on filter change, call `serializeFilterStateToSearchParams` and update the URL with `history.replaceState` or `pushState`.
+
+### Save/load reports
+
+Hosts may persist a report by saving the spec as JSON and restore it later. Use **`serializeReportSpecToJson(spec)`** to get a string (e.g. for localStorage or a server API), and **`parseReportSpecFromJson(json)`** to parse it back; the parser returns `{ ok: true, spec }` or `{ ok: false, error }`. No backend or database is required—persistence is the host's responsibility.
+
+### Export
+
+- **CSV**: Use **`exportTableToCsv(columns, rows)`** with resolved table columns and rows to produce a CSV string. The react-ui table widget exposes an "Export CSV" button that uses this.
+- **PDF**: PDF export is not currently exposed in the react-ui renderer. If this is reintroduced later, it will likely use the browser print dialog rather than a dedicated PDF library.
 
 ## Reporting context contract
 

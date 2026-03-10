@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import type { FilterSpec } from "./types";
-import type { ResolvedTableData, ResolvedBarChartData, ResolvedKpiData, ResolvedQueryExecution } from "./engine";
+import type { ResolvedTableData, ResolvedBarChartData, ResolvedStackedBarChartData, ResolvedLineChartData, ResolvedKpiData, ResolvedQueryExecution } from "./engine";
 export interface WidgetFrameProps {
     title?: string;
     queryInfo?: ResolvedQueryExecution;
@@ -13,6 +13,16 @@ export interface TableWidgetProps {
 export interface BarChartProps {
     title?: string;
     data: ResolvedBarChartData;
+    queryInfo?: ResolvedQueryExecution;
+}
+export interface StackedBarChartProps {
+    title?: string;
+    data: ResolvedStackedBarChartData;
+    queryInfo?: ResolvedQueryExecution;
+}
+export interface LineChartProps {
+    title?: string;
+    data: ResolvedLineChartData;
     queryInfo?: ResolvedQueryExecution;
 }
 export interface KpiProps {
@@ -32,6 +42,8 @@ export interface FilterBarProps {
 export interface ComponentRegistry {
     table: ComponentType<TableWidgetProps>;
     barChart: ComponentType<BarChartProps>;
+    stackedBarChart: ComponentType<StackedBarChartProps>;
+    lineChart: ComponentType<LineChartProps>;
     kpi: ComponentType<KpiProps>;
     filterBar: ComponentType<FilterBarProps>;
 }

@@ -4,7 +4,7 @@ export interface ReportRendererProps {
     spec: ReportSpec;
     dataProvider: DataProvider;
     registry: ComponentRegistry;
-    /** Optional page size for pagination (default 20). Omit or set to 0 to disable pagination. */
+    /** Optional fallback page size for paginatedList data sources that omit delivery.pageSize. */
     pageSize?: number;
 }
 export declare function ReportRenderer({ spec, dataProvider, registry, pageSize: pageSizeProp, }: ReportRendererProps): import("react/jsx-runtime").JSX.Element;

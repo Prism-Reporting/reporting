@@ -1,1 +1,1 @@
-{"version":3,"file":"TableWidgetView.d.ts","sourceRoot":"","sources":["../../src/components/TableWidgetView.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,gBAAgB,EAAE,MAAM,iBAAiB,CAAC;AAuBxD,wBAAgB,eAAe,CAAC,EAAE,KAAK,EAAE,IAAI,EAAE,SAAS,EAAE,EAAE,gBAAgB,2CAuC3E"}
+{"version":3,"file":"TableWidgetView.d.ts","sourceRoot":"","sources":["../../src/components/TableWidgetView.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,gBAAgB,EAAE,MAAM,iBAAiB,CAAC;AAmIxD,wBAAgB,eAAe,CAAC,EAAE,KAAK,EAAE,IAAI,EAAE,SAAS,EAAE,EAAE,gBAAgB,2CA+E3E"}

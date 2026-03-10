@@ -12,6 +12,7 @@
     "./http": { "types": "./dist/http.d.ts", "default": "./dist/http.js" },
     "./schemas": { "types": "./dist/schemas.d.ts", "default": "./dist/schemas.js" },
     "./build-report-tool": { "types": "./dist/build-report-tool.d.ts", "default": "./dist/build-report-tool.js" },
+    "./contract": { "types": "./dist/contract.d.ts", "default": "./dist/contract.js" },
     "./format-report-spec": { "types": "./dist/format-report-spec.d.ts", "default": "./dist/format-report-spec.js" }
   },
   "scripts": {

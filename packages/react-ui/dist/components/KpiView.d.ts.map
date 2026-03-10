@@ -1,1 +1,1 @@
-{"version":3,"file":"KpiView.d.ts","sourceRoot":"","sources":["../../src/components/KpiView.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,iBAAiB,CAAC;AAGhD,wBAAgB,OAAO,CAAC,EAAE,KAAK,EAAE,IAAI,EAAE,SAAS,EAAE,EAAE,QAAQ,2CAU3D"}
+{"version":3,"file":"KpiView.d.ts","sourceRoot":"","sources":["../../src/components/KpiView.tsx"],"names":[],"mappings":"AAQA,OAAO,KAAK,EAAE,QAAQ,EAAE,MAAM,iBAAiB,CAAC;AAwChD,wBAAgB,OAAO,CAAC,EAAE,KAAK,EAAE,IAAI,EAAE,SAAS,EAAE,EAAE,QAAQ,2CA2C3D"}

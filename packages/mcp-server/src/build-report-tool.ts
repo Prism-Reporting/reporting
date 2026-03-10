@@ -59,31 +59,88 @@ export function getBuildReportToolDefinition() {
   return {
     name: "build_report" as const,
     description:
-      "Submit final ReportSpec JSON. Call for every request.",
+      "Submit final ReportSpec JSON. Ensure you have loaded the report spec guide first (call get_report_spec_guide) to get the full authoring guide and exact spec shape; then build or modify the report according to that guide. Call build_report when the spec is ready to validate and apply.",
     parametersSchema: dslSchema,
     /**
      * Execute build_report: parse DSL, validate via MCP and locally, return spec + validationMeta.
      * Returns a JSON string so any client can parse and attach to their message format.
+     * On success includes optional trace (timestamp, specId, outcome). On validation/runtime
+     * failure returns { error, trace } instead of throwing so generation is observable.
      */
     async execute(
       args: BuildReportToolInput,
       context: BuildReportToolContext
     ): Promise<string> {
-      const spec = parseJson(args.dsl ?? "");
+      const now = () => new Date().toISOString();
+      let spec: unknown;
+      try {
+        spec = parseJson(args.dsl ?? "");
+      } catch (parseErr) {
+        const message = parseErr instanceof Error ? parseErr.message : String(parseErr);
+        return JSON.stringify({
+          error: message,
+          trace: {
+            timestamp: now(),
+            specId: undefined,
+            outcome: "error" as const,
+            errorMessage: message,
+          },
+        });
+      }
+      const specId =
+        spec != null && typeof spec === "object" && "id" in spec
+          ? (spec as { id?: string }).id
+          : undefined;
+
       const v = await context.validateReportSpecViaMcp(spec);
       if (!v.valid) {
         const messages = (v.diagnostics ?? []).map((d) => d.message).join("; ");
-        throw new Error(`build_report rejected invalid ReportSpec: ${messages}`);
+        return JSON.stringify({
+          error: `build_report rejected invalid ReportSpec: ${messages}`,
+          trace: {
+            timestamp: now(),
+            specId,
+            outcome: "error" as const,
+            errorMessage: messages,
+          },
+        });
       }
-      const local = validateReportSpec(spec as ReportSpec, context.validationContext);
-      if (!local.valid) {
-        throw new Error(local.errors.join("; "));
+      try {
+        const local = validateReportSpec(spec as ReportSpec, context.validationContext);
+        if (!local.valid) {
+          const message = local.errors.join("; ");
+          return JSON.stringify({
+            error: message,
+            trace: {
+              timestamp: now(),
+              specId,
+              outcome: "error" as const,
+              errorMessage: message,
+            },
+          });
+        }
+      } catch (localErr) {
+        const message = localErr instanceof Error ? localErr.message : String(localErr);
+        return JSON.stringify({
+          error: message,
+          trace: {
+            timestamp: now(),
+            specId,
+            outcome: "error" as const,
+            errorMessage: message,
+          },
+        });
       }
       return JSON.stringify({
         spec,
         validationMeta: {
           ...context.meta,
           validation: v,
+        },
+        trace: {
+          timestamp: now(),
+          specId,
+          outcome: "success" as const,
         },
       });
     },

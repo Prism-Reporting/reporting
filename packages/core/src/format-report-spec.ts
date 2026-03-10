@@ -5,7 +5,14 @@ interface SpecLike {
   id?: string;
   title?: string;
   layout?: string;
-  dataSources?: Record<string, { query?: string; params?: unknown }>;
+  dataSources?: Record<
+    string,
+    {
+      query?: string;
+      params?: unknown;
+      delivery?: { mode?: string };
+    }
+  >;
   filters?: Array<{ id?: string; label?: string; type?: string; dataSource?: string; paramKey?: string }>;
   widgets?: Array<{ id?: string; title?: string; type?: string; dataSource?: string; config?: Record<string, unknown> }>;
 }
@@ -34,8 +41,9 @@ export function formatReportSpecForPrompt(spec: Partial<ReportSpec> | SpecLike |
     dsNames.forEach((name) => {
       const ds = dataSources[name];
       const query = ds?.query ?? name;
+      const delivery = ds?.delivery?.mode ? ` [delivery: ${ds.delivery.mode}]` : "";
       const params = ds?.params ? ` (params: ${JSON.stringify(ds.params)})` : "";
-      lines.push(`  - ${name}: query "${query}"${params}`);
+      lines.push(`  - ${name}: query "${query}"${delivery}${params}`);
     });
   } else {
     lines.push("Data sources: none");
