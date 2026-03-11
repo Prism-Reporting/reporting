@@ -5,6 +5,8 @@ import type {
   ResolvedBarChartData,
   ResolvedStackedBarChartData,
   ResolvedLineChartData,
+  ResolvedPieChartData,
+  ResolvedScatterChartData,
   ResolvedKpiData,
   ResolvedQueryExecution,
 } from "./engine";
@@ -12,36 +14,48 @@ import type {
 export interface WidgetFrameProps {
   title?: string;
   queryInfo?: ResolvedQueryExecution;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export interface TableWidgetProps {
-  title?: string;
+export interface TableWidgetProps extends WidgetFrameProps {
   data: ResolvedTableData;
-  queryInfo?: ResolvedQueryExecution;
 }
 
-export interface BarChartProps {
-  title?: string;
+export interface BarChartProps extends WidgetFrameProps {
   data: ResolvedBarChartData;
-  queryInfo?: ResolvedQueryExecution;
 }
 
-export interface StackedBarChartProps {
-  title?: string;
+export interface StackedBarChartProps extends WidgetFrameProps {
   data: ResolvedStackedBarChartData;
-  queryInfo?: ResolvedQueryExecution;
 }
 
-export interface LineChartProps {
-  title?: string;
+export interface LineChartProps extends WidgetFrameProps {
   data: ResolvedLineChartData;
-  queryInfo?: ResolvedQueryExecution;
 }
 
-export interface KpiProps {
-  title?: string;
+export interface AreaChartProps extends WidgetFrameProps {
+  data: ResolvedLineChartData;
+}
+
+export interface PieChartProps extends WidgetFrameProps {
+  data: ResolvedPieChartData;
+}
+
+export interface DoughnutChartProps extends WidgetFrameProps {
+  data: ResolvedPieChartData;
+}
+
+export interface KpiProps extends WidgetFrameProps {
   data: ResolvedKpiData;
-  queryInfo?: ResolvedQueryExecution;
+}
+
+export interface FunnelChartProps extends WidgetFrameProps {
+  data: ResolvedPieChartData;
+}
+
+export interface ScatterChartProps extends WidgetFrameProps {
+  data: ResolvedScatterChartData;
 }
 
 export interface FilterBarProps {
@@ -59,6 +73,11 @@ export interface ComponentRegistry {
   barChart: ComponentType<BarChartProps>;
   stackedBarChart: ComponentType<StackedBarChartProps>;
   lineChart: ComponentType<LineChartProps>;
+  areaChart: ComponentType<AreaChartProps>;
+  pieChart: ComponentType<PieChartProps>;
+  doughnutChart: ComponentType<DoughnutChartProps>;
+  funnelChart: ComponentType<FunnelChartProps>;
+  scatterChart: ComponentType<ScatterChartProps>;
   kpi: ComponentType<KpiProps>;
   filterBar: ComponentType<FilterBarProps>;
 }

@@ -129,7 +129,13 @@ function downloadCsv(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-export function TableWidgetView({ title, data, queryInfo }: TableWidgetProps) {
+export function TableWidgetView({
+  title,
+  data,
+  queryInfo,
+  collapsed = false,
+  onToggleCollapse,
+}: TableWidgetProps) {
   const { rows, columns, groups, footer, drillDown } = data;
   const useGroups = groups && groups.length > 0;
   const hasFooter = footer && Object.keys(footer).length > 0;
@@ -173,39 +179,49 @@ export function TableWidgetView({ title, data, queryInfo }: TableWidgetProps) {
   );
 
   return (
-    <div className="report-widget report-table" data-testid="table-widget">
-      <div className="report-widget-header-row">
-        <WidgetHeader title={title} queryInfo={queryInfo} />
-        {hasData && (
-          <button
-            type="button"
-            className="report-table-export-csv"
-            onClick={handleExportCsv}
-            aria-label="Export table as CSV"
-          >
-            Export CSV
-          </button>
-        )}
-      </div>
-      <div className="report-table-container">
-        {useGroups ? (
-          <>
-            {groups!.map((group, gIdx) => (
-              <div key={gIdx} className="report-table-group">
-                <h4 className="report-table-group-title">{group.label}</h4>
-                <table>{renderTable(group.rows, false)}</table>
-              </div>
-            ))}
-            {hasFooter && (
-              <table className="report-table-footer-table">
-                <TableFooter columns={displayColumns} footer={footer!} />
-              </table>
-            )}
-          </>
-        ) : (
-          <table>{renderTable(rows, true)}</table>
-        )}
-      </div>
+    <div
+      className={`report-widget report-table${collapsed ? " report-widget-collapsed" : ""}`}
+      data-testid="table-widget"
+    >
+      <WidgetHeader
+        title={title}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+        actions={
+          hasData && !collapsed ? (
+            <button
+              type="button"
+              className="report-table-export-csv"
+              onClick={handleExportCsv}
+              aria-label="Export table as CSV"
+            >
+              Export CSV
+            </button>
+          ) : null
+        }
+      />
+      {!collapsed && (
+        <div className="report-table-container">
+          {useGroups ? (
+            <>
+              {groups!.map((group, gIdx) => (
+                <div key={gIdx} className="report-table-group">
+                  <h4 className="report-table-group-title">{group.label}</h4>
+                  <table>{renderTable(group.rows, false)}</table>
+                </div>
+              ))}
+              {hasFooter && (
+                <table className="report-table-footer-table">
+                  <TableFooter columns={displayColumns} footer={footer!} />
+                </table>
+              )}
+            </>
+          ) : (
+            <table>{renderTable(rows, true)}</table>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   buildParamsForDataSource,
 } from "@reporting/core";
 import type { ComponentRegistry, ResolvedReport } from "@reporting/core";
+import { WidgetHeader } from "./WidgetHeader.js";
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_VISUALIZATION_ROWS = 1000;
@@ -38,6 +39,7 @@ export function ReportRenderer({
     Record<string, { widget: ResolvedReport["widgets"][0]; queryInfo?: ResolvedQueryExecution }>
   >({});
   const [loadingWidgetIds, setLoadingWidgetIds] = useState<Record<string, boolean>>({});
+  const [collapsedWidgetIds, setCollapsedWidgetIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +89,11 @@ export function ReportRenderer({
   const BarChartComponent = registry.barChart;
   const StackedBarChartComponent = registry.stackedBarChart;
   const LineChartComponent = registry.lineChart;
+  const AreaChartComponent = registry.areaChart;
+  const PieChartComponent = registry.pieChart;
+  const DoughnutChartComponent = registry.doughnutChart;
+  const FunnelChartComponent = registry.funnelChart;
+  const ScatterChartComponent = registry.scatterChart;
   const KpiComponent = registry.kpi;
   const registryRef = useMemo(
     () => ({
@@ -94,6 +101,11 @@ export function ReportRenderer({
       barChart: BarChartComponent,
       stackedBarChart: StackedBarChartComponent,
       lineChart: LineChartComponent,
+      areaChart: AreaChartComponent,
+      pieChart: PieChartComponent,
+      doughnutChart: DoughnutChartComponent,
+      funnelChart: FunnelChartComponent,
+      scatterChart: ScatterChartComponent,
       kpi: KpiComponent,
       filterBar: FilterBarComponent,
     }),
@@ -102,6 +114,11 @@ export function ReportRenderer({
       BarChartComponent,
       StackedBarChartComponent,
       LineChartComponent,
+      AreaChartComponent,
+      PieChartComponent,
+      DoughnutChartComponent,
+      FunnelChartComponent,
+      ScatterChartComponent,
       KpiComponent,
       FilterBarComponent,
     ]
@@ -255,6 +272,13 @@ export function ReportRenderer({
     [dataProvider, resolved, spec]
   );
 
+  const handleToggleCollapse = useCallback((widgetId: string) => {
+    setCollapsedWidgetIds((current) => ({
+      ...current,
+      [widgetId]: !current[widgetId],
+    }));
+  }, []);
+
   const renderWidgets = useCallback(
     (
       widgets: ResolvedReport["widgets"],
@@ -283,6 +307,8 @@ export function ReportRenderer({
                 registry={registryRef}
                 onPageChange={handlePageChange}
                 loading={Boolean(loadingWidgetIds[w.spec.id])}
+                collapsed={Boolean(collapsedWidgetIds[w.spec.id])}
+                onToggleCollapse={handleToggleCollapse}
               />
             ))}
           </div>
@@ -304,6 +330,8 @@ export function ReportRenderer({
                 registry={registryRef}
                 onPageChange={handlePageChange}
                 loading={Boolean(loadingWidgetIds[w.spec.id])}
+                collapsed={Boolean(collapsedWidgetIds[w.spec.id])}
+                onToggleCollapse={handleToggleCollapse}
               />
             ))}
           </div>
@@ -328,6 +356,8 @@ export function ReportRenderer({
                 registry={registryRef}
                 onPageChange={handlePageChange}
                 loading={Boolean(loadingWidgetIds[w.spec.id])}
+                collapsed={Boolean(collapsedWidgetIds[w.spec.id])}
+                onToggleCollapse={handleToggleCollapse}
               />
             ))}
           </div>
@@ -339,7 +369,9 @@ export function ReportRenderer({
       gridStyle,
       handleFilterChange,
       handlePageChange,
+      handleToggleCollapse,
       layout,
+      collapsedWidgetIds,
       loadingWidgetIds,
       registryRef,
       spec,
@@ -476,6 +508,8 @@ function ReportWidget({
   registry,
   onPageChange,
   loading,
+  collapsed,
+  onToggleCollapse,
 }: {
   widget: ResolvedReport["widgets"][0];
   queryInfo?: ResolvedReport["queries"][0];
@@ -487,6 +521,8 @@ function ReportWidget({
   registry: ComponentRegistry;
   onPageChange: (widgetId: string, nextPage: number) => void;
   loading: boolean;
+  collapsed: boolean;
+  onToggleCollapse: (widgetId: string) => void;
 }) {
   const { spec, data } = widget;
   const pagination = queryInfo?.pagination;
@@ -503,8 +539,10 @@ function ReportWidget({
           title={spec.title}
           data={data.data}
           queryInfo={queryInfo}
+          collapsed={collapsed}
+          onToggleCollapse={() => onToggleCollapse(spec.id)}
         />
-        {pagination && (
+        {!collapsed && pagination && (
           <nav className="report-pagination" aria-label={`${spec.title ?? spec.id} pagination`}>
             <button
               type="button"
@@ -529,57 +567,177 @@ function ReportWidget({
     );
   } else if (data.type === "barChart") {
     content = blockReason ? (
-      <VisualizationBlockedState title={spec.title} message={blockReason} />
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
     ) : (
       <registry.barChart
         title={spec.title}
         data={data.data}
         queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
       />
     );
   } else if (data.type === "stackedBarChart") {
     content = blockReason ? (
-      <VisualizationBlockedState title={spec.title} message={blockReason} />
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
     ) : (
       <registry.stackedBarChart
         title={spec.title}
         data={data.data}
         queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
       />
     );
   } else if (data.type === "lineChart") {
     content = blockReason ? (
-      <VisualizationBlockedState title={spec.title} message={blockReason} />
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
     ) : (
       <registry.lineChart
         title={spec.title}
         data={data.data}
         queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "areaChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.areaChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "pieChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.pieChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "doughnutChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.doughnutChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "funnelChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.funnelChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "scatterChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.scatterChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
       />
     );
   } else if (data.type === "kpi") {
     content = blockReason ? (
-      <VisualizationBlockedState title={spec.title} message={blockReason} compact />
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        compact
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
     ) : (
       <registry.kpi
         title={spec.title}
         data={data.data}
         queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
       />
     );
   }
 
   if (!content) return null;
   return (
-    <div className={`report-widget-wrapper report-widget-wrapper-${spec.type}`}>
-      <ScopedFilterBar
-        filters={scopedFilters}
-        filterState={filterState}
-        onFilterChange={onFilterChange}
-        filterBar={registry.filterBar}
-        label={spec.title ?? spec.id}
-        compact
-      />
+    <div
+      className={`report-widget-wrapper report-widget-wrapper-${spec.type}${
+        collapsed ? " report-widget-wrapper-collapsed" : ""
+      }`}
+    >
+      {!collapsed && (
+        <ScopedFilterBar
+          filters={scopedFilters}
+          filterState={filterState}
+          onFilterChange={onFilterChange}
+          filterBar={registry.filterBar}
+          label={spec.title ?? spec.id}
+          compact
+        />
+      )}
       {content}
     </div>
   );
@@ -589,32 +747,40 @@ function VisualizationBlockedState({
   title,
   message,
   compact = false,
+  collapsed = false,
+  onToggleCollapse,
 }: {
   title?: string;
   message: string;
   compact?: boolean;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }) {
   return (
-    <div className="report-widget report-visualization-blocked">
-      <div className="report-widget-header">
-        {title ? <h3 className="report-widget-title">{title}</h3> : <span />}
-      </div>
-      <div
-        className={`report-visualization-blocked-body${compact ? " report-visualization-blocked-body-compact" : ""}`}
-      >
-        <div className="report-visualization-skeleton" aria-hidden="true">
-          <span className="report-visualization-skeleton-line report-visualization-skeleton-line-1" />
-          <span className="report-visualization-skeleton-line report-visualization-skeleton-line-2" />
-          <span className="report-visualization-skeleton-line report-visualization-skeleton-line-3" />
-          <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-1" />
-          <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-2" />
-          <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-3" />
-          <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-4" />
+    <div className={`report-widget report-visualization-blocked${collapsed ? " report-widget-collapsed" : ""}`}>
+      <WidgetHeader
+        title={title}
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+      />
+      {!collapsed && (
+        <div
+          className={`report-visualization-blocked-body${compact ? " report-visualization-blocked-body-compact" : ""}`}
+        >
+          <div className="report-visualization-skeleton" aria-hidden="true">
+            <span className="report-visualization-skeleton-line report-visualization-skeleton-line-1" />
+            <span className="report-visualization-skeleton-line report-visualization-skeleton-line-2" />
+            <span className="report-visualization-skeleton-line report-visualization-skeleton-line-3" />
+            <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-1" />
+            <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-2" />
+            <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-3" />
+            <span className="report-visualization-skeleton-bar report-visualization-skeleton-bar-4" />
+          </div>
+          <div className="report-visualization-overlay">
+            <p>{message}</p>
+          </div>
         </div>
-        <div className="report-visualization-overlay">
-          <p>{message}</p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

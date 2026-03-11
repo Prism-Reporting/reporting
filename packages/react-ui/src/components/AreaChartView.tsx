@@ -1,6 +1,6 @@
 import {
-  LineChart as RechartsLineChart,
-  Line,
+  AreaChart as RechartsAreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -8,10 +8,10 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import type { LineChartProps } from "@reporting/core";
+import type { AreaChartProps } from "@reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 
-const LINE_COLORS = [
+const AREA_COLORS = [
   "#3b82f6",
   "#10b981",
   "#f59e0b",
@@ -20,20 +20,20 @@ const LINE_COLORS = [
   "#ec4899",
 ];
 
-export function LineChartWidgetView({
+export function AreaChartView({
   title,
   data,
   queryInfo,
   collapsed = false,
   onToggleCollapse,
-}: LineChartProps) {
+}: AreaChartProps) {
   const { data: chartData, categoryKey, valueKey, series } = data;
   const hasMultipleSeries = series && series.length > 0;
 
   return (
     <div
-      className={`report-widget report-line-chart${collapsed ? " report-widget-collapsed" : ""}`}
-      data-testid="line-chart-widget"
+      className={`report-widget report-area-chart${collapsed ? " report-widget-collapsed" : ""}`}
+      data-testid="area-chart-widget"
     >
       <WidgetHeader
         title={title}
@@ -44,42 +44,38 @@ export function LineChartWidgetView({
       {!collapsed && (
         <div className="report-chart-container">
           <ResponsiveContainer width="100%" height="100%">
-            <RechartsLineChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+            <RechartsAreaChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis
-                dataKey={categoryKey}
-                tick={{ fontSize: 12 }}
-                tickLine={false}
-              />
+              <XAxis dataKey={categoryKey} tick={{ fontSize: 12 }} tickLine={false} />
               <YAxis tick={{ fontSize: 12 }} tickLine={false} />
-              <Tooltip
-                contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }}
-              />
+              <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }} />
               {hasMultipleSeries ? (
                 <>
-                  {series!.map((s, index) => (
-                    <Line
-                      key={s.key}
+                  {series!.map((entry, index) => (
+                    <Area
+                      key={entry.key}
                       type="monotone"
-                      dataKey={s.key}
-                      name={s.label}
-                      stroke={LINE_COLORS[index % LINE_COLORS.length]}
+                      dataKey={entry.key}
+                      name={entry.label}
+                      stroke={AREA_COLORS[index % AREA_COLORS.length]}
+                      fill={AREA_COLORS[index % AREA_COLORS.length]}
+                      fillOpacity={0.2}
                       strokeWidth={2}
-                      dot={{ r: 3 }}
                     />
                   ))}
                   <Legend />
                 </>
               ) : (
-                <Line
+                <Area
                   type="monotone"
                   dataKey={valueKey}
                   stroke="#3b82f6"
+                  fill="#3b82f6"
+                  fillOpacity={0.2}
                   strokeWidth={2}
-                  dot={{ r: 3 }}
                 />
               )}
-            </RechartsLineChart>
+            </RechartsAreaChart>
           </ResponsiveContainer>
         </div>
       )}

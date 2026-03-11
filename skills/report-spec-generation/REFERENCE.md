@@ -78,6 +78,76 @@ Full reference for Prism Reporting ReportSpec. Types align with `@reporting/core
 | title | string | no |
 | config | { categoryKey: string, valueKey: string, series?: Array<{ key: string, label: string }> } | yes (categoryKey, valueKey) |
 
+### LineChartWidgetSpec (type: "lineChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "lineChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { categoryKey: string, valueKey: string, series?: Array<{ key: string, label: string }> } | yes (categoryKey, valueKey) |
+
+### AreaChartWidgetSpec (type: "areaChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "areaChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { categoryKey: string, valueKey: string, series?: Array<{ key: string, label: string }> } | yes (categoryKey, valueKey) |
+
+### PieChartWidgetSpec (type: "pieChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "pieChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { categoryKey: string, valueKey: string } | yes |
+
+### DoughnutChartWidgetSpec (type: "doughnutChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "doughnutChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { categoryKey: string, valueKey: string } | yes |
+
+### StackedBarChartWidgetSpec (type: "stackedBarChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "stackedBarChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { categoryKey: string, series: Array<{ key: string, label?: string }> } | yes |
+
+### FunnelChartWidgetSpec (type: "funnelChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "funnelChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { categoryKey: string, valueKey: string } | yes |
+
+### ScatterChartWidgetSpec (type: "scatterChart")
+
+| Field | Type | Required |
+|-------|------|----------|
+| type | "scatterChart" | yes |
+| id | string | yes |
+| dataSource | string | yes |
+| title | string | no |
+| config | { xKey: string, yKey: string, zKey?: string } | yes (xKey, yKey) |
+
 ### KpiWidgetSpec (type: "kpi")
 
 | Field | Type | Required |

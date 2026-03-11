@@ -166,7 +166,12 @@ export const WIDGET_SIZE_CONSTRAINTS = {
   table: { minWidth: "320px", minHeight: "180px" },
   barChart: { minWidth: "320px", minHeight: "260px" },
   lineChart: { minWidth: "320px", minHeight: "260px" },
+  areaChart: { minWidth: "320px", minHeight: "260px" },
+  pieChart: { minWidth: "320px", minHeight: "260px" },
+  doughnutChart: { minWidth: "320px", minHeight: "260px" },
   stackedBarChart: { minWidth: "320px", minHeight: "260px" },
+  funnelChart: { minWidth: "320px", minHeight: "260px" },
+  scatterChart: { minWidth: "320px", minHeight: "260px" },
   kpi: { minWidth: "180px", minHeight: "80px" },
 } as const satisfies Record<string, WidgetSizeConstraints>;
 
@@ -203,6 +208,17 @@ export interface LineChartWidgetConfig {
   categoryKey: string;
   valueKey: string;
   series?: Array<{ key: string; label: string }>;
+}
+
+export interface AreaChartWidgetConfig {
+  categoryKey: string;
+  valueKey: string;
+  series?: Array<{ key: string; label: string }>;
+}
+
+export interface PieChartWidgetConfig {
+  categoryKey: string;
+  valueKey: string;
 }
 
 export interface KpiWidgetConfig {
@@ -254,6 +270,45 @@ export interface LineChartWidgetSpec {
   height?: string;
 }
 
+export interface AreaChartWidgetSpec {
+  type: "areaChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: AreaChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface PieChartWidgetSpec {
+  type: "pieChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: PieChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface DoughnutChartWidgetSpec {
+  type: "doughnutChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: PieChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
 /** Stacked bar chart: categoryKey for x-axis, series define stack segments (one Bar per series with stackId). */
 export interface StackedBarChartWidgetConfig {
   categoryKey: string;
@@ -268,6 +323,38 @@ export interface StackedBarChartWidgetSpec {
   /** Optional logical groups this widget belongs to. */
   groupIds?: string[];
   config: StackedBarChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface FunnelChartWidgetSpec {
+  type: "funnelChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: PieChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface ScatterChartWidgetConfig {
+  xKey: string;
+  yKey: string;
+  zKey?: string;
+}
+
+export interface ScatterChartWidgetSpec {
+  type: "scatterChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: ScatterChartWidgetConfig;
   /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
   width?: string;
   height?: string;
@@ -290,7 +377,12 @@ export type WidgetSpec =
   | TableWidgetSpec
   | BarChartWidgetSpec
   | LineChartWidgetSpec
+  | AreaChartWidgetSpec
+  | PieChartWidgetSpec
+  | DoughnutChartWidgetSpec
   | StackedBarChartWidgetSpec
+  | FunnelChartWidgetSpec
+  | ScatterChartWidgetSpec
   | KpiWidgetSpec;
 
 export function getWidgetSizeConstraints(type: WidgetSpec["type"]): WidgetSizeConstraints {

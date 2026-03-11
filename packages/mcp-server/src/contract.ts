@@ -89,6 +89,24 @@ export const supportedWidgets = [
     optionalFields: ["title", "config.series"],
   },
   {
+    type: "areaChart",
+    description: "Area chart widget with category (x-axis) and value (y-axis); optional series for multiple filled trends.",
+    requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
+    optionalFields: ["title", "config.series"],
+  },
+  {
+    type: "pieChart",
+    description: "Pie chart widget with category labels and a numeric value per slice.",
+    requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
+    optionalFields: ["title", "width", "height"],
+  },
+  {
+    type: "doughnutChart",
+    description: "Doughnut chart widget with category labels and a numeric value per slice.",
+    requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
+    optionalFields: ["title", "width", "height"],
+  },
+  {
     type: "kpi",
     description: "Single value widget that reads one field from the first query row. Optional trend shows a sparkline from first N rows.",
     requiredFields: ["type", "id", "dataSource", "config.valueKey"],
@@ -99,6 +117,18 @@ export const supportedWidgets = [
     description: "Stacked bar chart: categoryKey for x-axis, series array defines one stack segment per value key.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.series"],
     optionalFields: ["title", "width", "height"],
+  },
+  {
+    type: "funnelChart",
+    description: "Funnel chart widget with category labels and numeric values for each stage.",
+    requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
+    optionalFields: ["title", "width", "height"],
+  },
+  {
+    type: "scatterChart",
+    description: "Scatter or bubble chart widget with x/y numeric fields and optional zKey for bubble size.",
+    requiredFields: ["type", "id", "dataSource", "config.xKey", "config.yKey"],
+    optionalFields: ["title", "width", "height", "config.zKey"],
   },
 ] as const;
 
@@ -114,7 +144,7 @@ ReportSpec is the public DSL for AI-authored reporting in Prism Reporting. Agent
 4. Define \`dataSources\` as an object keyed by data source id.
 5. Every filter and widget \`dataSource\` must reference an existing key in \`dataSources\`.
 6. Use only supported filter types: \`select\`, \`multiSelect\`, \`dateRange\`, \`search\`, \`numericRange\`.
-7. Use only supported widget types: \`table\`, \`barChart\`, \`stackedBarChart\`, \`lineChart\`, \`kpi\`.
+7. Use only supported widget types: \`table\`, \`barChart\`, \`lineChart\`, \`areaChart\`, \`pieChart\`, \`doughnutChart\`, \`stackedBarChart\`, \`funnelChart\`, \`scatterChart\`, \`kpi\`.
 8. **Filter ids must be unique** within \`filters\`; **widget ids must be unique** within \`widgets\`.
 9. **Sections and tabs reference widgets by id**: Every value in \`sections[].widgetIds\` and \`tabs[].widgetIds\` must be exactly one of the \`id\` values from \`spec.widgets\`. Define all widgets in \`widgets\` first (each with a unique \`id\`), then use those same ids in \`sections\` or \`tabs\`; do not reference ids that are not in \`widgets\`.
 10. When query metadata is available, use only published query names and field keys.
@@ -170,12 +200,20 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 | \`barChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\`                          |
 | \`stackedBarChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.series\` | \`title\`, \`width\`, \`height\` |
 | \`lineChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\` (multiple lines)       |
+| \`areaChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\` (multiple filled areas) |
+| \`pieChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
+| \`doughnutChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
+| \`funnelChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
+| \`scatterChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.xKey\`, \`config.yKey\` | \`title\`, \`width\`, \`height\`, \`config.zKey\` |
 | \`kpi\`      | \`type\`, \`id\`, \`dataSource\`, \`config.valueKey\`  | \`title\`, \`width\`, \`height\`, \`config.label\`, \`config.format\`, \`config.currencyCode\`, \`config.decimalPlaces\`, \`config.trend\` |
 
 - **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`). Use \`groupByKey\` to group rows; \`groupLabelKey\` sets section header label. \`config.aggregations\` is an optional array of \`{ key, op }\`; footer row shows aggregated values. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default).
 - **barChart**: \`categoryKey\` and \`valueKey\` are field keys from the query result.
 - **stackedBarChart**: \`config.categoryKey\` for x-axis; \`config.series\` is an array of \`{ key, label? }\` (one stack segment per series key).
 - **lineChart**: \`categoryKey\` (x-axis) and \`valueKey\` (y-axis); data is ordered by category. Optional \`config.series\` for multiple lines (\`{ key, label }\` per series).
+- **areaChart**: same data contract as \`lineChart\`, but rendered as filled trend areas. Optional \`config.series\` for multiple areas.
+- **pieChart** / **doughnutChart** / **funnelChart**: use \`categoryKey\` and \`valueKey\`.
+- **scatterChart**: use \`xKey\` and \`yKey\`; optional \`zKey\` enables bubble-size rendering.
 - **kpi**: displays one value from the first row; \`format\` (\`number\`, \`currency\`, \`percent\`, \`plain\`), optional \`currencyCode\`, \`decimalPlaces\`. Optional \`config.trend\`: \`{ dataKey: string }\`; when set, a sparkline is shown from the first N rows using that dataKey (omitted if no rows).
 
 ## Presets (optional)

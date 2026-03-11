@@ -20,6 +20,13 @@ Generate a **ReportSpec** (JSON) from a natural language description. The output
 - **widgets** (array): One or more widget specs. Each has `type`, `id`, `dataSource`, optional `title`, and `config`:
   - **table**: `type: "table"`, `config: { columns: [{ key, label, type? }], groupByKey?, groupLabelKey? }` (type is `"string"` | `"number"` | `"date"`). Use optional `groupByKey` (e.g. `"projectName"`) to group rows; use `groupLabelKey` for the section header label or omit to use the group value.
   - **barChart**: `type: "barChart"`, `config: { categoryKey, valueKey, series? }`.
+  - **lineChart**: `type: "lineChart"`, `config: { categoryKey, valueKey, series? }`.
+  - **areaChart**: `type: "areaChart"`, `config: { categoryKey, valueKey, series? }`.
+  - **pieChart**: `type: "pieChart"`, `config: { categoryKey, valueKey }`.
+  - **doughnutChart**: `type: "doughnutChart"`, `config: { categoryKey, valueKey }`.
+  - **stackedBarChart**: `type: "stackedBarChart"`, `config: { categoryKey, series: [{ key, label? }] }`.
+  - **funnelChart**: `type: "funnelChart"`, `config: { categoryKey, valueKey }`.
+  - **scatterChart**: `type: "scatterChart"`, `config: { xKey, yKey, zKey? }`.
   - **kpi**: `type: "kpi"`, `config: { valueKey, label?, format? }` (format is `"number"` | `"percent"` | `"currency"`).
 
 All `dataSource` values in filters and widgets must reference a key from `dataSources`. Use stable, kebab-case ids for filters and widgets.

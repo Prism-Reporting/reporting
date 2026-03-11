@@ -11,7 +11,12 @@ import type {
   TableWidgetSpec,
   BarChartWidgetSpec,
   LineChartWidgetSpec,
+  AreaChartWidgetSpec,
+  PieChartWidgetSpec,
+  DoughnutChartWidgetSpec,
   StackedBarChartWidgetSpec,
+  FunnelChartWidgetSpec,
+  ScatterChartWidgetSpec,
   KpiWidgetSpec,
   DataSourceSpec,
   SortItem,
@@ -161,6 +166,19 @@ export interface ResolvedLineChartData {
   series?: Array<{ key: string; label: string }>;
 }
 
+export interface ResolvedPieChartData {
+  data: Array<Record<string, unknown>>;
+  categoryKey: string;
+  valueKey: string;
+}
+
+export interface ResolvedScatterChartData {
+  data: Array<Record<string, unknown>>;
+  xKey: string;
+  yKey: string;
+  zKey?: string;
+}
+
 export interface ResolvedKpiData {
   value: number | string;
   label?: string;
@@ -176,6 +194,11 @@ export type ResolvedWidgetData =
   | { type: "barChart"; data: ResolvedBarChartData }
   | { type: "stackedBarChart"; data: ResolvedStackedBarChartData }
   | { type: "lineChart"; data: ResolvedLineChartData }
+  | { type: "areaChart"; data: ResolvedLineChartData }
+  | { type: "pieChart"; data: ResolvedPieChartData }
+  | { type: "doughnutChart"; data: ResolvedPieChartData }
+  | { type: "funnelChart"; data: ResolvedPieChartData }
+  | { type: "scatterChart"; data: ResolvedScatterChartData }
   | { type: "kpi"; data: ResolvedKpiData };
 
 export interface ResolvedWidget {
@@ -1036,6 +1059,36 @@ export function validateReportSpec(
           "Bar chart valueKey"
         );
         break;
+      case "areaChart":
+        validateFieldReference(
+          `${path}.config.categoryKey`,
+          queryName,
+          widget.config.categoryKey,
+          "Area chart categoryKey"
+        );
+        validateFieldReference(
+          `${path}.config.valueKey`,
+          queryName,
+          widget.config.valueKey,
+          "Area chart valueKey"
+        );
+        break;
+      case "pieChart":
+      case "doughnutChart":
+      case "funnelChart":
+        validateFieldReference(
+          `${path}.config.categoryKey`,
+          queryName,
+          widget.config.categoryKey,
+          `${widget.type} categoryKey`
+        );
+        validateFieldReference(
+          `${path}.config.valueKey`,
+          queryName,
+          widget.config.valueKey,
+          `${widget.type} valueKey`
+        );
+        break;
       case "kpi":
         validateFieldReference(
           `${path}.config.valueKey`,
@@ -1132,12 +1185,34 @@ export function validateReportSpec(
           "Line chart valueKey"
         );
         break;
+      case "scatterChart":
+        validateFieldReference(
+          `${path}.config.xKey`,
+          queryName,
+          widget.config.xKey,
+          "Scatter chart xKey"
+        );
+        validateFieldReference(
+          `${path}.config.yKey`,
+          queryName,
+          widget.config.yKey,
+          "Scatter chart yKey"
+        );
+        if (widget.config.zKey !== undefined) {
+          validateFieldReference(
+            `${path}.config.zKey`,
+            queryName,
+            widget.config.zKey,
+            "Scatter chart zKey"
+          );
+        }
+        break;
       default:
         addError(
           `${path}.type`,
           "unsupported-widget-type",
           `Widget "${String(id ?? index)}" uses unsupported type "${String(widget.type)}"`,
-          'Use one of "table", "barChart", "stackedBarChart", "lineChart", or "kpi".'
+          'Use one of "table", "barChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "stackedBarChart", "funnelChart", "scatterChart", or "kpi".'
         );
     }
   }
@@ -1858,6 +1933,76 @@ export async function resolveReport(
             ...(chartSpec.config.series && chartSpec.config.series.length > 0
               ? { series: chartSpec.config.series }
               : {}),
+          },
+        },
+      });
+    } else if (widget.type === "areaChart") {
+      const chartSpec = widget as AreaChartWidgetSpec;
+      const orderedData = sortRowsByCategory(rows, chartSpec.config.categoryKey);
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "areaChart",
+          data: {
+            data: orderedData,
+            categoryKey: chartSpec.config.categoryKey,
+            valueKey: chartSpec.config.valueKey,
+            ...(chartSpec.config.series && chartSpec.config.series.length > 0
+              ? { series: chartSpec.config.series }
+              : {}),
+          },
+        },
+      });
+    } else if (widget.type === "pieChart") {
+      const chartSpec = widget as PieChartWidgetSpec;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "pieChart",
+          data: {
+            data: rows,
+            categoryKey: chartSpec.config.categoryKey,
+            valueKey: chartSpec.config.valueKey,
+          },
+        },
+      });
+    } else if (widget.type === "doughnutChart") {
+      const chartSpec = widget as DoughnutChartWidgetSpec;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "doughnutChart",
+          data: {
+            data: rows,
+            categoryKey: chartSpec.config.categoryKey,
+            valueKey: chartSpec.config.valueKey,
+          },
+        },
+      });
+    } else if (widget.type === "funnelChart") {
+      const chartSpec = widget as FunnelChartWidgetSpec;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "funnelChart",
+          data: {
+            data: rows,
+            categoryKey: chartSpec.config.categoryKey,
+            valueKey: chartSpec.config.valueKey,
+          },
+        },
+      });
+    } else if (widget.type === "scatterChart") {
+      const chartSpec = widget as ScatterChartWidgetSpec;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "scatterChart",
+          data: {
+            data: rows,
+            xKey: chartSpec.config.xKey,
+            yKey: chartSpec.config.yKey,
+            ...(chartSpec.config.zKey ? { zKey: chartSpec.config.zKey } : {}),
           },
         },
       });

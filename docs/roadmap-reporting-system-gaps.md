@@ -279,6 +279,18 @@ If the goal is to make the system feel substantially more robust as quickly as p
 
 Of these, clarification and semantic confidence may create more perceived quality than adding several more widget types.
 
+## Current TODO focus
+
+The next concrete TODO list is captured in [todo-reporting-enhancements.md](./todo-reporting-enhancements.md).
+
+Priority items from that list:
+
+- KPI aggregation for totals such as total budget spend
+- Raw grouped summarization for object-style summaries like project milestones with latest completion date
+- `cardView`
+- `timelineView` / gantt-style scheduling
+- Further specialized charts only where the semantics are clear and implementation cost stays low
+
 ## Product principle
 
 The system should evolve from:
