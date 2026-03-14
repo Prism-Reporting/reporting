@@ -8,6 +8,14 @@ function escapeCsvCell(value: string): string {
   return value;
 }
 
+function stringifyCellValue(value: unknown): string {
+  if (value == null) return "";
+  if (Array.isArray(value)) {
+    return value.map((item) => stringifyCellValue(item)).join(", ");
+  }
+  return String(value);
+}
+
 /**
  * Exports table data to a CSV string. Uses column keys for cell values and column labels for the header row.
  * Values are stringified; commas, quotes, and newlines in values are escaped per RFC 4180-style CSV.
@@ -18,7 +26,7 @@ export function exportTableToCsv(
 ): string {
   const header = columns.map((c) => escapeCsvCell(c.label)).join(",");
   const dataRows = rows.map((row) =>
-    columns.map((c) => escapeCsvCell(String(row[c.key] ?? ""))).join(",")
+    columns.map((c) => escapeCsvCell(stringifyCellValue(row[c.key]))).join(",")
   );
   return [header, ...dataRows].join("\r\n");
 }

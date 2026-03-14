@@ -59,6 +59,86 @@ function createBarChartSpec(height = '260px') {
 }
 
 describe('kpi validation parity', () => {
+  it('accepts KPI aggregation config when the source field exists', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'projects-budget-kpi',
+        title: 'Budget KPI',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'kpi',
+            id: 'total-budget-spend',
+            title: 'Total Budget Spend',
+            dataSource: 'projects',
+            config: {
+              valueKey: 'budgetSpent',
+              aggregation: { op: 'sum', key: 'budgetSpent' },
+              format: 'currency',
+              currencyCode: 'USD',
+              decimalPlaces: 0,
+              prefix: '~',
+              suffix: ' total',
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projects'],
+        availableFields: {
+          projects: ['id', 'budgetSpent'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('rejects KPI aggregation keys that are missing from the query contract', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'projects-budget-kpi-invalid',
+        title: 'Budget KPI',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'kpi',
+            id: 'total-budget-spend',
+            title: 'Total Budget Spend',
+            dataSource: 'projects',
+            config: {
+              valueKey: 'budgetSpent',
+              aggregation: { op: 'sum', key: 'budgetSpend' },
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projects'],
+        availableFields: {
+          projects: ['id', 'budgetSpent'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, false);
+    assert.match(validation.errors.join('\n'), /budgetSpend/);
+  });
+
   it('accepts "_count" as a reserved KPI valueKey', () => {
     const validation = validateReportSpec(createKpiSpec('_count'), {
       availableQueries: ['projects'],
@@ -114,6 +194,358 @@ describe('kpi validation parity', () => {
 
     assert.equal(resolved.widgets[0].data.type, 'kpi');
     assert.equal(resolved.widgets[0].data.data.value, '');
+  });
+
+  it('aggregates KPI values across the full result set', async () => {
+    const resolved = await resolveReport(
+      {
+        id: 'projects-budget-kpi-runtime',
+        title: 'Budget KPI',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'kpi',
+            id: 'total-budget-spend',
+            title: 'Total Budget Spend',
+            dataSource: 'projects',
+            config: {
+              valueKey: 'budgetSpent',
+              aggregation: { op: 'sum', key: 'budgetSpent' },
+              format: 'currency',
+              currencyCode: 'USD',
+              decimalPlaces: 0,
+              prefix: '~',
+              suffix: ' total',
+            },
+          },
+        ],
+      },
+      {
+        async runQuery() {
+          return [
+            { id: 'p-1', budgetSpent: 1200 },
+            { id: 'p-2', budgetSpent: 800 },
+            { id: 'p-3', budgetSpent: 250 },
+          ];
+        },
+      }
+    );
+
+    assert.equal(resolved.widgets[0].data.type, 'kpi');
+    assert.deepEqual(resolved.widgets[0].data.data, {
+      value: 2250,
+      format: 'currency',
+      currencyCode: 'USD',
+      decimalPlaces: 0,
+      prefix: '~',
+      suffix: ' total',
+    });
+  });
+
+  it('accepts summary-only table configs and validates summary fields', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'milestone-summary',
+        title: 'Milestone Summary',
+        layout: 'singleColumn',
+        dataSources: {
+          milestones: {
+            name: 'milestones',
+            query: 'projectMilestones',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'milestone-summary',
+            title: 'Milestone Summary',
+            dataSource: 'milestones',
+            config: {
+              groupByKey: 'projectId',
+              summary: [
+                { key: 'milestoneName', op: 'distinct' },
+                { key: 'completionDate', op: 'latest' },
+                { key: 'budgetSpent', op: 'sum' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projectMilestones'],
+        availableFields: {
+          projectMilestones: ['projectId', 'milestoneName', 'completionDate', 'budgetSpent'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('rejects grouped summaries on paginated table data sources', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'milestone-summary-paginated',
+        title: 'Milestone Summary',
+        layout: 'singleColumn',
+        dataSources: {
+          milestones: {
+            name: 'milestones',
+            query: 'projectMilestones',
+            delivery: { mode: 'paginatedList', pageSize: 25 },
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'milestone-summary',
+            dataSource: 'milestones',
+            config: {
+              groupByKey: 'projectId',
+              summary: [{ key: 'completionDate', op: 'latest' }],
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projectMilestones'],
+        availableFields: {
+          projectMilestones: ['projectId', 'completionDate'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, false);
+    assert.match(validation.errors.join('\n'), /paginatedList/);
+  });
+
+  it('resolves grouped summary rows with derived columns and date-aware latest reducers', async () => {
+    const resolved = await resolveReport(
+      {
+        id: 'milestone-summary-runtime',
+        title: 'Milestone Summary',
+        layout: 'singleColumn',
+        dataSources: {
+          milestones: {
+            name: 'milestones',
+            query: 'projectMilestones',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'milestone-summary',
+            title: 'Milestone Summary',
+            dataSource: 'milestones',
+            config: {
+              groupByKey: 'projectId',
+              summary: [
+                { key: 'milestoneName', op: 'distinct' },
+                { key: 'completionDate', op: 'latest' },
+                { key: 'budgetSpent', op: 'sum' },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        async runQuery() {
+          return [
+            {
+              projectId: 'p-1',
+              milestoneName: 'Design',
+              completionDate: '2026-03-01T00:30:00+05:00',
+              budgetSpent: 250,
+            },
+            {
+              projectId: 'p-1',
+              milestoneName: 'Launch',
+              completionDate: '2026-02-28T20:00:00Z',
+              budgetSpent: 400,
+            },
+            {
+              projectId: 'p-1',
+              milestoneName: 'Design',
+              completionDate: '2026-02-20T10:00:00Z',
+              budgetSpent: 50,
+            },
+            {
+              projectId: 'p-2',
+              milestoneName: 'Kickoff',
+              completionDate: '2026-01-15',
+              budgetSpent: 100,
+            },
+          ];
+        },
+      }
+    );
+
+    assert.equal(resolved.widgets[0].data.type, 'table');
+    assert.deepEqual(resolved.widgets[0].data.data.columns, [
+      { key: 'projectId', label: 'Project Id' },
+      { key: 'milestoneName', label: 'Milestone Name' },
+      { key: 'completionDate', label: 'Completion Date' },
+      { key: 'budgetSpent', label: 'Budget Spent' },
+    ]);
+    assert.deepEqual(resolved.widgets[0].data.data.rows, [
+      {
+        projectId: 'p-1',
+        milestoneName: ['Design', 'Launch'],
+        completionDate: '2026-02-28T20:00:00Z',
+        budgetSpent: 700,
+      },
+      {
+        projectId: 'p-2',
+        milestoneName: ['Kickoff'],
+        completionDate: '2026-01-15',
+        budgetSpent: 100,
+      },
+    ]);
+    assert.equal(resolved.widgets[0].data.data.groups, undefined);
+  });
+
+  it('accepts card views on paginated data sources and validates referenced fields', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'portfolio-cards',
+        title: 'Portfolio Cards',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+            delivery: { mode: 'paginatedList', pageSize: 12 },
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'cardView',
+            id: 'portfolio-cards',
+            dataSource: 'projects',
+            config: {
+              titleKey: 'name',
+              subtitleKey: 'owner',
+              badges: [{ key: 'status' }],
+              metadata: [
+                { key: 'phase', label: 'Phase' },
+                { key: 'nextMilestone', label: 'Next milestone' },
+              ],
+              primaryMetric: {
+                key: 'budgetSpent',
+                label: 'Spend',
+                format: 'currency',
+                currencyCode: 'USD',
+                decimalPlaces: 0,
+              },
+              template: 'compact',
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projects'],
+        availableFields: {
+          projects: ['name', 'owner', 'status', 'phase', 'nextMilestone', 'budgetSpent'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('resolves card view rows with normalized labels and default template', async () => {
+    const resolved = await resolveReport(
+      {
+        id: 'portfolio-cards-runtime',
+        title: 'Portfolio Cards',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'cardView',
+            id: 'portfolio-cards',
+            title: 'Projects',
+            dataSource: 'projects',
+            config: {
+              titleKey: 'name',
+              subtitleKey: 'owner',
+              badges: [{ key: 'status' }],
+              metadata: [
+                { key: 'phase' },
+                { key: 'nextMilestone', label: 'Next milestone' },
+              ],
+              primaryMetric: {
+                key: 'budgetSpent',
+                label: 'Spend',
+                format: 'currency',
+                currencyCode: 'USD',
+                decimalPlaces: 0,
+              },
+            },
+          },
+        ],
+      },
+      {
+        async runQuery() {
+          return [
+            {
+              name: 'Vendor Portal',
+              owner: 'Operations',
+              status: 'At Risk',
+              phase: 'Build',
+              nextMilestone: 'Pilot readiness',
+              budgetSpent: 125000,
+            },
+          ];
+        },
+      }
+    );
+
+    assert.equal(resolved.widgets[0].data.type, 'cardView');
+    assert.deepEqual(resolved.widgets[0].data.data, {
+      rows: [
+        {
+          name: 'Vendor Portal',
+          owner: 'Operations',
+          status: 'At Risk',
+          phase: 'Build',
+          nextMilestone: 'Pilot readiness',
+          budgetSpent: 125000,
+        },
+      ],
+      titleKey: 'name',
+      subtitleKey: 'owner',
+      badges: [{ key: 'status', label: 'Status' }],
+      metadata: [
+        { key: 'phase', label: 'Phase' },
+        { key: 'nextMilestone', label: 'Next milestone' },
+      ],
+      primaryMetric: {
+        key: 'budgetSpent',
+        label: 'Spend',
+        format: 'currency',
+        currencyCode: 'USD',
+        decimalPlaces: 0,
+      },
+      template: 'detailed',
+    });
   });
 
   it('preserves paginated query metadata from the data provider', async () => {

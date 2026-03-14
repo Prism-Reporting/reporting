@@ -9,6 +9,7 @@ import type {
   FilterDataSourceRef,
   WidgetSpec,
   TableWidgetSpec,
+  CardViewWidgetSpec,
   BarChartWidgetSpec,
   LineChartWidgetSpec,
   AreaChartWidgetSpec,
@@ -21,6 +22,7 @@ import type {
   DataSourceSpec,
   SortItem,
   AggregationSpec,
+  TableSummarySpec,
   PolicyResult,
   ReportAuditEvent,
 } from "./types.js";
@@ -35,6 +37,13 @@ import type {
 export const REPORT_SPEC_VERSION = "v1" as const;
 const KPI_COUNT_VALUE_KEY = "_count";
 const DEFAULT_FULL_VISUAL_MAX_ROWS = 1000;
+const VALID_AGGREGATION_OPS = ["sum", "avg", "min", "max", "count"] as const;
+const VALID_TABLE_SUMMARY_OPS = [
+  ...VALID_AGGREGATION_OPS,
+  "latest",
+  "earliest",
+  "distinct",
+] as const;
 
 export interface ValidationDiagnostic {
   path: string;
@@ -132,6 +141,25 @@ export interface ResolvedTableData {
   };
 }
 
+export interface ResolvedCardViewData {
+  rows: Record<string, unknown>[];
+  titleKey: string;
+  subtitleKey?: string;
+  badges?: Array<{ key: string; label: string }>;
+  metadata?: Array<{ key: string; label: string }>;
+  primaryMetric?: {
+    key: string;
+    label?: string;
+    format?: "number" | "currency" | "percent" | "plain";
+    currencyCode?: string;
+    decimalPlaces?: number;
+    prefix?: string;
+    suffix?: string;
+  };
+  template: "compact" | "detailed";
+  emptyStateText?: string;
+}
+
 export interface ResolvedPaginationMetadata {
   totalCount: number;
   pageSize: number;
@@ -185,12 +213,15 @@ export interface ResolvedKpiData {
   format?: "number" | "currency" | "percent" | "plain";
   currencyCode?: string;
   decimalPlaces?: number;
+  prefix?: string;
+  suffix?: string;
   /** When trend is requested and data has rows: values for sparkline (first N rows, e.g. 10). */
   trendData?: number[];
 }
 
 export type ResolvedWidgetData =
   | { type: "table"; data: ResolvedTableData }
+  | { type: "cardView"; data: ResolvedCardViewData }
   | { type: "barChart"; data: ResolvedBarChartData }
   | { type: "stackedBarChart"; data: ResolvedStackedBarChartData }
   | { type: "lineChart"; data: ResolvedLineChartData }
@@ -845,12 +876,16 @@ export function validateReportSpec(
       }
     }
 
-    if (dataSourceDelivery?.mode === "paginatedList" && widget.type !== "table") {
+    if (
+      dataSourceDelivery?.mode === "paginatedList" &&
+      widget.type !== "table" &&
+      widget.type !== "cardView"
+    ) {
       addError(
         `${path}.dataSource`,
         "invalid-widget-delivery-mode",
         `Widget "${String(id ?? index)}" of type "${widget.type}" cannot use paginatedList dataSource "${widget.dataSource}"`,
-        "Use delivery.mode = \"fullVisual\" for charts, or \"summary\" for KPI/aggregate widgets."
+        "Use delivery.mode = \"paginatedList\" for browsing widgets such as table/cardView, \"fullVisual\" for charts, or \"summary\" for KPI/aggregate widgets."
       );
     }
 
@@ -865,62 +900,76 @@ export function validateReportSpec(
 
     switch (widget.type) {
       case "table": {
-        if (!Array.isArray(widget.config.columns)) {
+        const columns = widget.config.columns;
+        const summary = widget.config.summary;
+        const hasColumns = Array.isArray(columns);
+        const hasSummary = Array.isArray(summary) && summary.length > 0;
+
+        if (!hasColumns && !hasSummary) {
+          addError(
+            `${path}.config`,
+            "missing-table-shape",
+            `Table widget "${String(id ?? index)}" must define config.columns or config.summary`,
+            "Add config.columns for raw rows, or config.summary for derived summary rows."
+          );
+          break;
+        }
+
+        if (columns !== undefined && !Array.isArray(columns)) {
           addError(
             `${path}.config.columns`,
             "invalid-table-columns",
-            `Table widget "${String(id ?? index)}" must define a columns array`,
+            `Table widget "${String(id ?? index)}" columns must be an array when present`,
             "Add config.columns as an array with at least one object: { key: \"fieldName\", label: \"Label\" }."
           );
-          break;
-        }
-        if (widget.config.columns.length === 0) {
-          addError(
-            `${path}.config.columns`,
-            "empty-table-columns",
-            `Table widget "${String(id ?? index)}" has an empty columns array`,
-            "Add at least one column to config.columns, e.g. { key: \"name\", label: \"Task\" }."
-          );
-          break;
-        }
-
-        for (const [columnIndex, column] of widget.config.columns.entries()) {
-          if (!isRecord(column)) {
+        } else if (Array.isArray(columns)) {
+          if (columns.length === 0 && !hasSummary) {
             addError(
-              `${path}.config.columns.${columnIndex}`,
-              "invalid-table-column",
-              "Table columns must be objects",
-              "Provide { key, label, type? } for each column."
-            );
-            continue;
-          }
-
-          validateFieldReference(
-            `${path}.config.columns.${columnIndex}.key`,
-            queryName,
-            column.key,
-            "Table column key"
-          );
-
-          if (!isNonEmptyString(column.label)) {
-            addError(
-              `${path}.config.columns.${columnIndex}.label`,
-              "missing-table-column-label",
-              "Table column label must be a non-empty string",
-              "Provide a label shown in the rendered table."
+              `${path}.config.columns`,
+              "empty-table-columns",
+              `Table widget "${String(id ?? index)}" has an empty columns array`,
+              "Add at least one column to config.columns, e.g. { key: \"name\", label: \"Task\" }, or provide config.summary."
             );
           }
 
-          if (
-            column.type !== undefined &&
-            !["string", "number", "date"].includes(String(column.type))
-          ) {
-            addError(
-              `${path}.config.columns.${columnIndex}.type`,
-              "invalid-table-column-type",
-              `Table column type "${String(column.type)}" is not supported`,
-              'Use "string", "number", or "date".'
+          for (const [columnIndex, column] of columns.entries()) {
+            if (!isRecord(column)) {
+              addError(
+                `${path}.config.columns.${columnIndex}`,
+                "invalid-table-column",
+                "Table columns must be objects",
+                "Provide { key, label, type? } for each column."
+              );
+              continue;
+            }
+
+            validateFieldReference(
+              `${path}.config.columns.${columnIndex}.key`,
+              queryName,
+              column.key,
+              "Table column key"
             );
+
+            if (!isNonEmptyString(column.label)) {
+              addError(
+                `${path}.config.columns.${columnIndex}.label`,
+                "missing-table-column-label",
+                "Table column label must be a non-empty string",
+                "Provide a label shown in the rendered table."
+              );
+            }
+
+            if (
+              column.type !== undefined &&
+              !["string", "number", "date"].includes(String(column.type))
+            ) {
+              addError(
+                `${path}.config.columns.${columnIndex}.type`,
+                "invalid-table-column-type",
+                `Table column type "${String(column.type)}" is not supported`,
+                'Use "string", "number", or "date".'
+              );
+            }
           }
         }
 
@@ -948,7 +997,79 @@ export function validateReportSpec(
             "Table groupLabelKey must be a non-empty string when present",
             "Use a row field key for the group header label, or omit to use group value."
           );
+        } else if (
+          widget.config.groupLabelKey !== undefined &&
+          queryName &&
+          fieldLookup[queryName]
+        ) {
+          validateFieldReference(
+            `${path}.config.groupLabelKey`,
+            queryName,
+            widget.config.groupLabelKey,
+            "Table groupLabelKey"
+          );
         }
+
+        if (summary !== undefined) {
+          if (!Array.isArray(summary)) {
+            addError(
+              `${path}.config.summary`,
+              "invalid-table-summary",
+              "Table summary must be an array when present",
+              "Provide an array of { key: string, op: \"sum\" | \"avg\" | \"min\" | \"max\" | \"count\" | \"latest\" | \"earliest\" | \"distinct\" }."
+            );
+          } else if (summary.length === 0 && !hasColumns) {
+            addError(
+              `${path}.config.summary`,
+              "empty-table-summary",
+              "Table summary cannot be an empty array when used to derive table rows",
+              "Add at least one summary reducer or provide config.columns for a raw table."
+            );
+          } else {
+            for (const [summaryIndex, item] of summary.entries()) {
+              if (!isRecord(item)) {
+                addError(
+                  `${path}.config.summary.${summaryIndex}`,
+                  "invalid-table-summary-item",
+                  "Table summary item must be an object with key and op",
+                  "Provide { key: string, op: \"sum\" | \"avg\" | \"min\" | \"max\" | \"count\" | \"latest\" | \"earliest\" | \"distinct\" }."
+                );
+                continue;
+              }
+
+              validateFieldReference(
+                `${path}.config.summary.${summaryIndex}.key`,
+                queryName,
+                item.key,
+                "Table summary key"
+              );
+
+              if (
+                item.op !== undefined &&
+                !VALID_TABLE_SUMMARY_OPS.includes(
+                  String(item.op) as typeof VALID_TABLE_SUMMARY_OPS[number]
+                )
+              ) {
+                addError(
+                  `${path}.config.summary.${summaryIndex}.op`,
+                  "invalid-table-summary-op",
+                  `Table summary op must be one of ${VALID_TABLE_SUMMARY_OPS.join(", ")}`,
+                  `Set op to one of: ${VALID_TABLE_SUMMARY_OPS.join(", ")}.`
+                );
+              }
+            }
+          }
+        }
+
+        if (hasSummary && dataSourceDelivery?.mode === "paginatedList") {
+          addError(
+            `${path}.dataSource`,
+            "invalid-table-summary-delivery-mode",
+            `Table widget "${String(id ?? index)}" with config.summary cannot use paginatedList dataSource "${widget.dataSource}"`,
+            "Use delivery.mode = \"fullVisual\" so summary reducers run across the full filtered result set."
+          );
+        }
+
         const aggs = widget.config.aggregations;
         if (aggs !== undefined) {
           if (!Array.isArray(aggs)) {
@@ -959,7 +1080,6 @@ export function validateReportSpec(
               "Provide an array of { key: string, op: \"sum\" | \"avg\" | \"min\" | \"max\" | \"count\" }."
             );
           } else {
-            const validOps = ["sum", "avg", "min", "max", "count"];
             for (const [aggIndex, agg] of aggs.entries()) {
               if (!isRecord(agg)) {
                 addError(
@@ -977,12 +1097,17 @@ export function validateReportSpec(
                     "Use a column key from config.columns."
                   );
                 }
-                if (agg.op !== undefined && !validOps.includes(String(agg.op))) {
+                if (
+                  agg.op !== undefined &&
+                  !VALID_AGGREGATION_OPS.includes(
+                    String(agg.op) as typeof VALID_AGGREGATION_OPS[number]
+                  )
+                ) {
                   addError(
                     `${path}.config.aggregations.${aggIndex}.op`,
                     "invalid-aggregation-op",
-                    `Aggregation op must be one of ${validOps.join(", ")}`,
-                    `Set op to one of: ${validOps.join(", ")}.`
+                    `Aggregation op must be one of ${VALID_AGGREGATION_OPS.join(", ")}`,
+                    `Set op to one of: ${VALID_AGGREGATION_OPS.join(", ")}.`
                   );
                 }
               }
@@ -1042,6 +1167,169 @@ export function validateReportSpec(
               "Use _blank to open in new tab (default), or _self to navigate in same window."
             );
           }
+        }
+        break;
+      }
+      case "cardView": {
+        validateFieldReference(
+          `${path}.config.titleKey`,
+          queryName,
+          widget.config.titleKey,
+          "Card view titleKey"
+        );
+        if (widget.config.subtitleKey !== undefined) {
+          validateFieldReference(
+            `${path}.config.subtitleKey`,
+            queryName,
+            widget.config.subtitleKey,
+            "Card view subtitleKey"
+          );
+        }
+
+        const validateFieldList = (
+          value: unknown,
+          listPath: string,
+          label: string
+        ) => {
+          if (value === undefined) return;
+          if (!Array.isArray(value)) {
+            addError(
+              listPath,
+              `invalid-${label}-list`,
+              `${label} must be an array when present`,
+              `Provide ${label} as an array of { key: string, label?: string }.`
+            );
+            return;
+          }
+
+          for (const [fieldIndex, field] of value.entries()) {
+            if (!isRecord(field)) {
+              addError(
+                `${listPath}.${fieldIndex}`,
+                `invalid-${label}-item`,
+                `${label} items must be objects`,
+                "Provide { key, label? } for each item."
+              );
+              continue;
+            }
+
+            validateFieldReference(
+              `${listPath}.${fieldIndex}.key`,
+              queryName,
+              field.key,
+              `${label} key`
+            );
+
+            if (field.label !== undefined && !isNonEmptyString(field.label)) {
+              addError(
+                `${listPath}.${fieldIndex}.label`,
+                `invalid-${label}-label`,
+                `${label} label must be a non-empty string when present`,
+                "Omit label to derive one from the key, or provide display text."
+              );
+            }
+          }
+        };
+
+        validateFieldList(widget.config.badges, `${path}.config.badges`, "Card badges");
+        validateFieldList(widget.config.metadata, `${path}.config.metadata`, "Card metadata");
+
+        if (widget.config.primaryMetric !== undefined) {
+          const metric = widget.config.primaryMetric;
+          if (!isRecord(metric)) {
+            addError(
+              `${path}.config.primaryMetric`,
+              "invalid-card-primaryMetric",
+              "Card view primaryMetric must be an object",
+              "Provide primaryMetric as { key, label?, format?, currencyCode?, decimalPlaces?, prefix?, suffix? }."
+            );
+          } else {
+            validateFieldReference(
+              `${path}.config.primaryMetric.key`,
+              queryName,
+              metric.key,
+              "Card view primaryMetric key"
+            );
+            if (metric.label !== undefined && !isNonEmptyString(metric.label)) {
+              addError(
+                `${path}.config.primaryMetric.label`,
+                "invalid-card-primaryMetric-label",
+                "Card view primaryMetric.label must be a non-empty string when present",
+                "Omit label to derive one from the key, or provide display text."
+              );
+            }
+            if (
+              metric.format !== undefined &&
+              !["number", "percent", "currency", "plain"].includes(String(metric.format))
+            ) {
+              addError(
+                `${path}.config.primaryMetric.format`,
+                "invalid-card-primaryMetric-format",
+                `Card view primaryMetric format "${String(metric.format)}" is not supported`,
+                'Use "number", "percent", "currency", or "plain".'
+              );
+            }
+            if (metric.currencyCode !== undefined && !isNonEmptyString(metric.currencyCode)) {
+              addError(
+                `${path}.config.primaryMetric.currencyCode`,
+                "invalid-card-primaryMetric-currencyCode",
+                "Card view primaryMetric.currencyCode must be a non-empty string when present",
+                "Use an ISO 4217 code such as USD or EUR."
+              );
+            }
+            if (metric.decimalPlaces !== undefined) {
+              const decimalPlaces = Number(metric.decimalPlaces);
+              if (!Number.isInteger(decimalPlaces) || decimalPlaces < 0) {
+                addError(
+                  `${path}.config.primaryMetric.decimalPlaces`,
+                  "invalid-card-primaryMetric-decimalPlaces",
+                  "Card view primaryMetric.decimalPlaces must be a non-negative integer",
+                  "Use 0 for whole numbers, or a positive integer for fixed decimal precision."
+                );
+              }
+            }
+            if (metric.prefix !== undefined && typeof metric.prefix !== "string") {
+              addError(
+                `${path}.config.primaryMetric.prefix`,
+                "invalid-card-primaryMetric-prefix",
+                "Card view primaryMetric.prefix must be a string when present",
+                "Use prefix for leading display text such as ~ or >."
+              );
+            }
+            if (metric.suffix !== undefined && typeof metric.suffix !== "string") {
+              addError(
+                `${path}.config.primaryMetric.suffix`,
+                "invalid-card-primaryMetric-suffix",
+                "Card view primaryMetric.suffix must be a string when present",
+                "Use suffix for trailing display text such as % or hrs."
+              );
+            }
+          }
+        }
+
+        if (
+          widget.config.template !== undefined &&
+          widget.config.template !== "compact" &&
+          widget.config.template !== "detailed"
+        ) {
+          addError(
+            `${path}.config.template`,
+            "invalid-card-template",
+            `Card view template "${String(widget.config.template)}" is not supported`,
+            'Use "compact" or "detailed".'
+          );
+        }
+
+        if (
+          widget.config.emptyStateText !== undefined &&
+          !isNonEmptyString(widget.config.emptyStateText)
+        ) {
+          addError(
+            `${path}.config.emptyStateText`,
+            "invalid-card-emptyStateText",
+            "Card view emptyStateText must be a non-empty string when present",
+            "Provide user-facing empty-state text, or omit the field."
+          );
         }
         break;
       }
@@ -1124,6 +1412,81 @@ export function validateReportSpec(
               "KPI trend dataKey"
             );
           }
+        }
+        if (widget.config.aggregation !== undefined) {
+          const aggregation = widget.config.aggregation;
+          if (!isRecord(aggregation)) {
+            addError(
+              `${path}.config.aggregation`,
+              "invalid-kpi-aggregation",
+              "KPI aggregation must be an object",
+              'Provide aggregation as { key: string, op: "sum" | "avg" | "min" | "max" | "count" }.'
+            );
+          } else {
+            validateFieldReference(
+              `${path}.config.aggregation.key`,
+              queryName,
+              aggregation.key,
+              "KPI aggregation key"
+            );
+            if (
+              aggregation.op === undefined ||
+              !VALID_AGGREGATION_OPS.includes(
+                String(aggregation.op) as typeof VALID_AGGREGATION_OPS[number]
+              )
+            ) {
+              addError(
+                `${path}.config.aggregation.op`,
+                "invalid-kpi-aggregation-op",
+                `KPI aggregation op must be one of ${VALID_AGGREGATION_OPS.join(", ")}`,
+                `Set op to one of: ${VALID_AGGREGATION_OPS.join(", ")}.`
+              );
+            }
+          }
+        }
+        if (
+          widget.config.currencyCode !== undefined &&
+          !isNonEmptyString(widget.config.currencyCode)
+        ) {
+          addError(
+            `${path}.config.currencyCode`,
+            "invalid-kpi-currencyCode",
+            "KPI currencyCode must be a non-empty string when present",
+            "Use an ISO 4217 code such as USD or EUR."
+          );
+        }
+        if (widget.config.decimalPlaces !== undefined) {
+          const decimalPlaces = Number(widget.config.decimalPlaces);
+          if (!Number.isInteger(decimalPlaces) || decimalPlaces < 0) {
+            addError(
+              `${path}.config.decimalPlaces`,
+              "invalid-kpi-decimalPlaces",
+              "KPI decimalPlaces must be a non-negative integer",
+              "Use 0 for whole numbers, or a positive integer for fixed decimal precision."
+            );
+          }
+        }
+        if (
+          widget.config.prefix !== undefined &&
+          typeof widget.config.prefix !== "string"
+        ) {
+          addError(
+            `${path}.config.prefix`,
+            "invalid-kpi-prefix",
+            "KPI prefix must be a string when present",
+            'Use prefix for leading display text such as "~" or ">".'
+          );
+        }
+        if (
+          widget.config.suffix !== undefined &&
+          typeof widget.config.suffix !== "string"
+        ) {
+          addError(
+            `${path}.config.suffix`,
+            "invalid-kpi-suffix",
+            "KPI suffix must be a string when present",
+            'Use suffix for trailing display text such as "%" or " hrs".'
+          );
         }
         break;
       case "stackedBarChart": {
@@ -1212,7 +1575,7 @@ export function validateReportSpec(
           `${path}.type`,
           "unsupported-widget-type",
           `Widget "${String(id ?? index)}" uses unsupported type "${String(widget.type)}"`,
-          'Use one of "table", "barChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "stackedBarChart", "funnelChart", "scatterChart", or "kpi".'
+          'Use one of "table", "cardView", "barChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "stackedBarChart", "funnelChart", "scatterChart", or "kpi".'
         );
     }
   }
@@ -1484,6 +1847,185 @@ function computeAggregations(
     }
   }
   return out;
+}
+
+function computeAggregationValue(
+  rows: Record<string, unknown>[],
+  aggregation: AggregationSpec
+): number | null {
+  const aggregated = computeAggregations(rows, [aggregation])[aggregation.key];
+  return typeof aggregated === "number" ? aggregated : null;
+}
+
+function toHumanReadableLabel(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function normalizeCardFieldList(
+  fields: Array<{ key: string; label?: string }> | undefined
+): Array<{ key: string; label: string }> | undefined {
+  if (!fields || fields.length === 0) return undefined;
+  return fields.map((field) => ({
+    key: field.key,
+    label: field.label?.trim() || toHumanReadableLabel(field.key),
+  }));
+}
+
+function getSummaryComparableValue(value: unknown):
+  | { kind: "number" | "date" | "string"; value: number | string }
+  | null {
+  if (value == null) return null;
+
+  if (value instanceof Date) {
+    const timestamp = value.getTime();
+    return Number.isNaN(timestamp) ? null : { kind: "date", value: timestamp };
+  }
+
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? null : { kind: "number", value };
+  }
+
+  if (typeof value === "string") {
+    const timestamp = Date.parse(value);
+    if (!Number.isNaN(timestamp)) {
+      return { kind: "date", value: timestamp };
+    }
+
+    const numeric = Number(value);
+    if (value.trim() !== "" && !Number.isNaN(numeric)) {
+      return { kind: "number", value: numeric };
+    }
+
+    return { kind: "string", value };
+  }
+
+  if (typeof value === "boolean") {
+    return { kind: "number", value: value ? 1 : 0 };
+  }
+
+  return { kind: "string", value: String(value) };
+}
+
+function compareSummaryValues(a: unknown, b: unknown): number {
+  const comparableA = getSummaryComparableValue(a);
+  const comparableB = getSummaryComparableValue(b);
+
+  if (comparableA == null && comparableB == null) return 0;
+  if (comparableA == null) return -1;
+  if (comparableB == null) return 1;
+
+  if (comparableA.kind === comparableB.kind) {
+    if (typeof comparableA.value === "number" && typeof comparableB.value === "number") {
+      return comparableA.value - comparableB.value;
+    }
+    return String(comparableA.value).localeCompare(String(comparableB.value), undefined, {
+      numeric: true,
+    });
+  }
+
+  return String(a).localeCompare(String(b), undefined, { numeric: true });
+}
+
+function computeTableSummaryValue(
+  rows: Record<string, unknown>[],
+  summary: TableSummarySpec
+): unknown {
+  switch (summary.op) {
+    case "distinct": {
+      const distinctValues: unknown[] = [];
+      const seen = new Set<string>();
+      for (const row of rows) {
+        const value = row[summary.key];
+        if (value == null) continue;
+        const serialized =
+          typeof value === "string"
+            ? `string:${value}`
+            : typeof value === "number"
+              ? `number:${value}`
+              : typeof value === "boolean"
+                ? `boolean:${value}`
+                : JSON.stringify(value);
+        if (seen.has(serialized)) continue;
+        seen.add(serialized);
+        distinctValues.push(value);
+      }
+      return distinctValues;
+    }
+    case "latest":
+    case "earliest": {
+      let best: unknown = null;
+      for (const row of rows) {
+        const value = row[summary.key];
+        if (value == null) continue;
+        if (best == null) {
+          best = value;
+          continue;
+        }
+        const comparison = compareSummaryValues(value, best);
+        if (
+          (summary.op === "latest" && comparison > 0) ||
+          (summary.op === "earliest" && comparison < 0)
+        ) {
+          best = value;
+        }
+      }
+      return best;
+    }
+    default:
+      return computeAggregations(rows, [{ key: summary.key, op: summary.op }])[summary.key];
+  }
+}
+
+function buildTableSummaryRow(
+  rows: Record<string, unknown>[],
+  summary: TableSummarySpec[],
+  groupByKey?: string,
+  groupLabelKey?: string
+): Record<string, unknown> {
+  const summaryRow: Record<string, unknown> = {};
+  const firstRow = rows[0];
+
+  if (groupByKey && firstRow) {
+    summaryRow[groupByKey] = firstRow[groupByKey];
+  }
+
+  if (groupLabelKey && firstRow) {
+    summaryRow[groupLabelKey] = firstRow[groupLabelKey];
+  }
+
+  for (const item of summary) {
+    summaryRow[item.key] = computeTableSummaryValue(rows, item);
+  }
+
+  return summaryRow;
+}
+
+function buildDerivedSummaryColumns(
+  summary: TableSummarySpec[],
+  groupByKey?: string,
+  groupLabelKey?: string
+): Array<{ key: string; label: string }> {
+  const keys: string[] = [];
+  const pushKey = (value: string | undefined) => {
+    if (!value || keys.includes(value)) return;
+    keys.push(value);
+  };
+
+  pushKey(groupLabelKey);
+  pushKey(groupByKey);
+  for (const item of summary) {
+    pushKey(item.key);
+  }
+
+  return keys.map((key) => ({
+    key,
+    label: toHumanReadableLabel(key),
+  }));
 }
 
 function getFilterDataSourceTargets(dataSource: FilterDataSourceRef): string[] {
@@ -1839,17 +2381,46 @@ export async function resolveReport(
       const tableSpec = widget as TableWidgetSpec;
       let tableRows = rows;
       const widgetSort = normalizeSort(tableSpec.config.sort);
-      if (widgetSort.length > 0) {
-        tableRows = sortRows(tableRows, widgetSort);
-      }
-      const columns = tableSpec.config.columns.map((c) => ({
-        key: c.key,
-        label: c.label,
-      }));
       const groupByKey = tableSpec.config.groupByKey;
+      const groupLabelKey = tableSpec.config.groupLabelKey?.trim();
+      const summary = tableSpec.config.summary;
       let groups: Array<{ label: string; rows: Record<string, unknown>[] }> | undefined;
-      if (groupByKey && groupByKey.trim() !== "") {
-        const labelKey = (tableSpec.config.groupLabelKey?.trim() || groupByKey) as string;
+
+      if (summary != null && summary.length > 0) {
+        if (groupByKey && groupByKey.trim() !== "") {
+          const map = new Map<string, Record<string, unknown>[]>();
+          for (const row of tableRows) {
+            const key = row[groupByKey];
+            const groupKey =
+              key === undefined || key === null ? "\0" : String(key);
+            let list = map.get(groupKey);
+            if (!list) {
+              map.set(groupKey, (list = []));
+            }
+            list.push(row);
+          }
+
+          tableRows = [];
+          for (const groupRows of map.values()) {
+            if (groupRows.length === 0) continue;
+            tableRows.push(
+              buildTableSummaryRow(groupRows, summary, groupByKey, groupLabelKey)
+            );
+          }
+        } else {
+          tableRows =
+            tableRows.length > 0
+              ? [buildTableSummaryRow(tableRows, summary)]
+              : [];
+        }
+        if (widgetSort.length > 0) {
+          tableRows = sortRows(tableRows, widgetSort);
+        }
+      } else if (groupByKey && groupByKey.trim() !== "") {
+        if (widgetSort.length > 0) {
+          tableRows = sortRows(tableRows, widgetSort);
+        }
+        const labelKey = (groupLabelKey || groupByKey) as string;
         const map = new Map<string, Record<string, unknown>[]>();
         for (const row of tableRows) {
           const key = row[groupByKey];
@@ -1870,7 +2441,17 @@ export async function resolveReport(
               : (groupRows[0][labelKey] != null ? String(groupRows[0][labelKey]) : groupKey);
           groups.push({ label, rows: groupRows });
         }
+      } else if (widgetSort.length > 0) {
+        tableRows = sortRows(tableRows, widgetSort);
       }
+      const columns =
+        tableSpec.config.columns?.map((c) => ({
+          key: c.key,
+          label: c.label,
+        })) ??
+        (summary != null && summary.length > 0
+          ? buildDerivedSummaryColumns(summary, groupByKey, groupLabelKey)
+          : []);
       const aggregations = tableSpec.config.aggregations;
       const footer =
         aggregations != null && aggregations.length > 0
@@ -1886,6 +2467,47 @@ export async function resolveReport(
             ...(groups && groups.length > 0 ? { groups } : {}),
             ...(footer != null ? { footer } : {}),
             ...(tableSpec.config.drillDown != null ? { drillDown: tableSpec.config.drillDown } : {}),
+          },
+        },
+      });
+    } else if (widget.type === "cardView") {
+      const cardSpec = widget as CardViewWidgetSpec;
+      const badges = normalizeCardFieldList(cardSpec.config.badges);
+      const metadata = normalizeCardFieldList(cardSpec.config.metadata);
+      const primaryMetric = cardSpec.config.primaryMetric;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "cardView",
+          data: {
+            rows,
+            titleKey: cardSpec.config.titleKey,
+            ...(cardSpec.config.subtitleKey
+              ? { subtitleKey: cardSpec.config.subtitleKey }
+              : {}),
+            ...(badges ? { badges } : {}),
+            ...(metadata ? { metadata } : {}),
+            ...(primaryMetric
+              ? {
+                  primaryMetric: {
+                    key: primaryMetric.key,
+                    ...(primaryMetric.label ? { label: primaryMetric.label } : {}),
+                    ...(primaryMetric.format ? { format: primaryMetric.format } : {}),
+                    ...(primaryMetric.currencyCode
+                      ? { currencyCode: primaryMetric.currencyCode }
+                      : {}),
+                    ...(primaryMetric.decimalPlaces != null
+                      ? { decimalPlaces: primaryMetric.decimalPlaces }
+                      : {}),
+                    ...(primaryMetric.prefix != null ? { prefix: primaryMetric.prefix } : {}),
+                    ...(primaryMetric.suffix != null ? { suffix: primaryMetric.suffix } : {}),
+                  },
+                }
+              : {}),
+            template: cardSpec.config.template ?? "detailed",
+            ...(cardSpec.config.emptyStateText
+              ? { emptyStateText: cardSpec.config.emptyStateText }
+              : {}),
           },
         },
       });
@@ -2009,12 +2631,15 @@ export async function resolveReport(
     } else if (widget.type === "kpi") {
       const kpiSpec = widget as KpiWidgetSpec;
       const first = rows[0];
+      const aggregation = kpiSpec.config.aggregation;
       const raw =
-        kpiSpec.config.valueKey === KPI_COUNT_VALUE_KEY
-          ? rows.length
-          : first && typeof first === "object" && kpiSpec.config.valueKey in first
-            ? (first as Record<string, unknown>)[kpiSpec.config.valueKey]
-            : "";
+        aggregation != null
+          ? computeAggregationValue(rows, aggregation)
+          : kpiSpec.config.valueKey === KPI_COUNT_VALUE_KEY
+            ? rows.length
+            : first && typeof first === "object" && kpiSpec.config.valueKey in first
+              ? (first as Record<string, unknown>)[kpiSpec.config.valueKey]
+              : "";
       const value: number | string =
         typeof raw === "number" || typeof raw === "string" ? raw : String(raw ?? "");
       const trendConfig = kpiSpec.config.trend;
@@ -2036,10 +2661,12 @@ export async function resolveReport(
           type: "kpi",
           data: {
             value,
-            label: kpiSpec.config.label,
+            ...(kpiSpec.config.label != null ? { label: kpiSpec.config.label } : {}),
             ...(kpiSpec.config.format != null ? { format: kpiSpec.config.format } : {}),
             ...(kpiSpec.config.currencyCode != null ? { currencyCode: kpiSpec.config.currencyCode } : {}),
             ...(kpiSpec.config.decimalPlaces != null ? { decimalPlaces: kpiSpec.config.decimalPlaces } : {}),
+            ...(kpiSpec.config.prefix != null ? { prefix: kpiSpec.config.prefix } : {}),
+            ...(kpiSpec.config.suffix != null ? { suffix: kpiSpec.config.suffix } : {}),
             ...(trendData != null && trendData.length > 0 ? { trendData } : {}),
           },
         },

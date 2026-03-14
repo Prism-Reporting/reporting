@@ -71,7 +71,25 @@ export function formatReportSpecForPrompt(spec: Partial<ReportSpec> | SpecLike |
       const dataSource = w.dataSource ? ` (data: ${w.dataSource})` : "";
       lines.push(`  - ${title}${type}${dataSource}`);
       const config = w.config as
-        | { columns?: Array<{ key?: string; label?: string; type?: string }>; groupByKey?: string; valueKey?: string }
+        | {
+            columns?: Array<{ key?: string; label?: string; type?: string }>;
+            groupByKey?: string;
+            summary?: Array<{ key?: string; op?: string }>;
+            titleKey?: string;
+            subtitleKey?: string;
+            badges?: Array<{ key?: string; label?: string }>;
+            metadata?: Array<{ key?: string; label?: string }>;
+            primaryMetric?: {
+              key?: string;
+              label?: string;
+              format?: string;
+            };
+            template?: string;
+            valueKey?: string;
+            aggregation?: { key?: string; op?: string };
+            prefix?: string;
+            suffix?: string;
+          }
         | undefined;
       if (config?.columns?.length) {
         config.columns.forEach((col) => {
@@ -84,8 +102,50 @@ export function formatReportSpecForPrompt(spec: Partial<ReportSpec> | SpecLike |
       if (config?.groupByKey) {
         lines.push(`      Group by: ${config.groupByKey}`);
       }
+      if (config?.summary?.length) {
+        config.summary.forEach((item) => {
+          if (item.key && item.op) {
+            lines.push(`      Summary: ${item.op}(${item.key})`);
+          }
+        });
+      }
+      if (config?.titleKey) {
+        lines.push(`      Card title: ${config.titleKey}`);
+      }
+      if (config?.subtitleKey) {
+        lines.push(`      Card subtitle: ${config.subtitleKey}`);
+      }
+      if (config?.badges?.length) {
+        config.badges.forEach((badge) => {
+          if (badge.key) {
+            lines.push(`      Badge: ${badge.label ?? badge.key}`);
+          }
+        });
+      }
+      if (config?.metadata?.length) {
+        config.metadata.forEach((field) => {
+          if (field.key) {
+            lines.push(`      Metadata: ${field.label ?? field.key}`);
+          }
+        });
+      }
+      if (config?.primaryMetric?.key) {
+        lines.push(`      Primary metric: ${config.primaryMetric.label ?? config.primaryMetric.key}`);
+      }
+      if (config?.template) {
+        lines.push(`      Card template: ${config.template}`);
+      }
       if (config?.valueKey != null) {
         lines.push(`      Value: ${config.valueKey}`);
+      }
+      if (config?.aggregation?.key && config?.aggregation?.op) {
+        lines.push(`      Aggregate: ${config.aggregation.op}(${config.aggregation.key})`);
+      }
+      if (config?.prefix != null) {
+        lines.push(`      Prefix: ${config.prefix}`);
+      }
+      if (config?.suffix != null) {
+        lines.push(`      Suffix: ${config.suffix}`);
       }
     });
   } else {

@@ -86,6 +86,7 @@ export function ReportRenderer({
 
   const FilterBarComponent = registry.filterBar;
   const TableComponent = registry.table;
+  const CardViewComponent = registry.cardView;
   const BarChartComponent = registry.barChart;
   const StackedBarChartComponent = registry.stackedBarChart;
   const LineChartComponent = registry.lineChart;
@@ -98,6 +99,7 @@ export function ReportRenderer({
   const registryRef = useMemo(
     () => ({
       table: TableComponent,
+      cardView: CardViewComponent,
       barChart: BarChartComponent,
       stackedBarChart: StackedBarChartComponent,
       lineChart: LineChartComponent,
@@ -111,6 +113,7 @@ export function ReportRenderer({
     }),
     [
       TableComponent,
+      CardViewComponent,
       BarChartComponent,
       StackedBarChartComponent,
       LineChartComponent,
@@ -565,6 +568,39 @@ function ReportWidget({
         )}
       </>
     );
+  } else if (data.type === "cardView") {
+    content = (
+      <>
+        <registry.cardView
+          title={spec.title}
+          data={data.data}
+          queryInfo={queryInfo}
+          collapsed={collapsed}
+          onToggleCollapse={() => onToggleCollapse(spec.id)}
+        />
+        {!collapsed && pagination && (
+          <nav className="report-pagination" aria-label={`${spec.title ?? spec.id} pagination`}>
+            <button
+              type="button"
+              className="report-pagination-prev"
+              disabled={loading || pagination.page <= 1}
+              onClick={() => onPageChange(spec.id, pagination.page - 1)}
+            >
+              Previous
+            </button>
+            <span className="report-pagination-page">{paginationSummary}</span>
+            <button
+              type="button"
+              className="report-pagination-next"
+              disabled={loading || !pagination.hasMore}
+              onClick={() => onPageChange(spec.id, pagination.page + 1)}
+            >
+              {loading ? "Loading..." : "Next"}
+            </button>
+          </nav>
+        )}
+      </>
+    );
   } else if (data.type === "barChart") {
     content = blockReason ? (
       <VisualizationBlockedState
@@ -802,7 +838,7 @@ function getVisualizationBlockReason(
   widget: ResolvedReport["widgets"][0],
   queryInfo?: ResolvedReport["queries"][0]
 ): string | null {
-  if (widget.data.type === "table") return null;
+  if (widget.data.type === "table" || widget.data.type === "cardView") return null;
 
   if (queryInfo?.limitExceeded) {
     return (

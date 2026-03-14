@@ -157,6 +157,13 @@ export interface AggregationSpec {
   op: AggregationOp;
 }
 
+export type TableSummaryOp = AggregationOp | "latest" | "earliest" | "distinct";
+
+export interface TableSummarySpec {
+  key: string;
+  op: TableSummaryOp;
+}
+
 export interface WidgetSizeConstraints {
   minWidth: string;
   minHeight: string;
@@ -164,6 +171,7 @@ export interface WidgetSizeConstraints {
 
 export const WIDGET_SIZE_CONSTRAINTS = {
   table: { minWidth: "320px", minHeight: "180px" },
+  cardView: { minWidth: "320px", minHeight: "220px" },
   barChart: { minWidth: "320px", minHeight: "260px" },
   lineChart: { minWidth: "320px", minHeight: "260px" },
   areaChart: { minWidth: "320px", minHeight: "260px" },
@@ -177,7 +185,11 @@ export const WIDGET_SIZE_CONSTRAINTS = {
 
 // --- Widgets ---
 export interface TableWidgetConfig {
-  columns: Array<{
+  /**
+   * Optional when `summary` is provided; otherwise required.
+   * When omitted, the engine derives columns from groupByKey / groupLabelKey and summary keys.
+   */
+  columns?: Array<{
     key: string;
     label: string;
     type?: "string" | "number" | "date";
@@ -186,6 +198,11 @@ export interface TableWidgetConfig {
   groupByKey?: string;
   /** Optional key to use for group header label; defaults to the group key value. */
   groupLabelKey?: string;
+  /**
+   * Optional summary reducers applied across the full result set or once per group when `groupByKey` is set.
+   * Supports grouped raw/object summaries such as latest milestone date or distinct milestone names per project.
+   */
+  summary?: TableSummarySpec[];
   /** Optional aggregations; footer row shows aggregated values for numeric columns. */
   aggregations?: AggregationSpec[];
   /** Optional widget-level sort; applied after dataSource sort when building table data. */
@@ -221,14 +238,47 @@ export interface PieChartWidgetConfig {
   valueKey: string;
 }
 
-export interface KpiWidgetConfig {
-  valueKey: string;
-  label?: string;
-  format?: "number" | "currency" | "percent" | "plain";
+export type ValueFormat = "number" | "currency" | "percent" | "plain";
+
+export interface ValueDisplayConfig {
+  format?: ValueFormat;
   currencyCode?: string;
   decimalPlaces?: number;
+  prefix?: string;
+  suffix?: string;
+}
+
+export interface KpiWidgetConfig {
+  valueKey: string;
+  aggregation?: AggregationSpec;
+  label?: string;
+  format?: ValueFormat;
+  currencyCode?: string;
+  decimalPlaces?: number;
+  prefix?: string;
+  suffix?: string;
   /** Optional trend: sparkline from first N rows using this dataKey; omitted if no rows. */
   trend?: { dataKey: string };
+}
+
+export interface CardFieldConfig {
+  key: string;
+  label?: string;
+}
+
+export interface CardMetricConfig extends ValueDisplayConfig {
+  key: string;
+  label?: string;
+}
+
+export interface CardWidgetConfig {
+  titleKey: string;
+  subtitleKey?: string;
+  badges?: CardFieldConfig[];
+  metadata?: CardFieldConfig[];
+  primaryMetric?: CardMetricConfig;
+  template?: "compact" | "detailed";
+  emptyStateText?: string;
 }
 
 export interface TableWidgetSpec {
@@ -240,6 +290,19 @@ export interface TableWidgetSpec {
   groupIds?: string[];
   config: TableWidgetConfig;
   /** Optional sizing hint (e.g. "100%", "50%", "400px"). UI enforces a 320px minimum width and 180px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface CardViewWidgetSpec {
+  type: "cardView";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: CardWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 220px minimum height. */
   width?: string;
   height?: string;
 }
@@ -375,6 +438,7 @@ export interface KpiWidgetSpec {
 
 export type WidgetSpec =
   | TableWidgetSpec
+  | CardViewWidgetSpec
   | BarChartWidgetSpec
   | LineChartWidgetSpec
   | AreaChartWidgetSpec

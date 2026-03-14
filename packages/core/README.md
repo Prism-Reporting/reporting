@@ -29,7 +29,7 @@ The ReportSpec is a structured DSL that describes reports. AI tools (future phas
 | `name` | string | Yes | Unique name within the report |
 | `query` | string | Yes | Query identifier (passed to DataProvider.runQuery) |
 | `params` | Record<string, unknown> | No | Static default parameters |
-| `delivery` | `{ mode, pageSize?, maxRows? }` | No | Explicit integration contract. Use `paginatedList` for table/list sources, `fullVisual` for full chart datasets, `summary` for aggregated/KPI sources. |
+| `delivery` | `{ mode, pageSize?, maxRows? }` | No | Explicit integration contract. Use `paginatedList` for table/list sources, `fullVisual` for full chart datasets and engine-side grouped summaries, `summary` for backend-aggregated KPI sources. |
 
 ### FilterSpec Variants
 
@@ -41,7 +41,8 @@ All filters require: `id`, `label`, `dataSource` (must reference a key in `dataS
 
 ### WidgetSpec Variants
 
-- **TableWidget**: `type: "table"`, `config.columns: { key, label }[]`
+- **TableWidget**: `type: "table"`, `config.columns?: { key, label }[]`, `config.summary?: { key, op }[]`
+- **CardViewWidget**: `type: "cardView"`, `config.titleKey`, optional `config.subtitleKey`, `config.badges`, `config.metadata`, `config.primaryMetric`, `config.template`
 - **BarChartWidget**: `type: "barChart"`, `config.categoryKey`, `config.valueKey`
 - **KpiWidget**: `type: "kpi"`, `config.valueKey`, `config.label?`
 
@@ -53,6 +54,7 @@ Sizing hints:
 - The renderer enforces per-widget minimum sizes even when a smaller hint is provided.
 - Current minimums are exported as `WIDGET_SIZE_CONSTRAINTS` and available through `getWidgetSizeConstraints()`:
   - table: min `320px` wide, `180px` tall
+  - cardView: min `320px` wide, `220px` tall
   - bar/line/stacked charts: min `320px` wide, `260px` tall
   - KPI: min `180px` wide, `80px` tall
 
@@ -174,7 +176,7 @@ Implementations may be local (e.g. starter reading from query catalog) or remote
 
 ## Component Registry
 
-The `ComponentRegistry` interface maps primitives (table, barChart, kpi, filterBar) to React components. Hosts can provide custom implementations (e.g., Ant Design, MUI) without changing the spec.
+The `ComponentRegistry` interface maps primitives (table, cardView, barChart, kpi, filterBar, and the other supported visual widgets) to React components. Hosts can provide custom implementations (e.g., Ant Design, MUI) without changing the spec.
 
 ## Example: Natural Language → ReportSpec
 

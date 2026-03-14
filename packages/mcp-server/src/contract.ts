@@ -72,9 +72,15 @@ export const supportedFilters = [
 export const supportedWidgets = [
   {
     type: "table",
-    description: "Tabular widget for row-oriented query results. Optional groupByKey, groupLabelKey, aggregations, sort. Optional drillDown opens URL with row values (urlTemplate placeholders, paramKeys).",
-    requiredFields: ["type", "id", "dataSource", "config.columns"],
-    optionalFields: ["title", "config.groupByKey", "config.groupLabelKey", "config.aggregations", "config.sort", "config.drillDown"],
+    description: "Tabular widget for raw rows or grouped summary rows. Provide config.columns for raw tables, or config.summary to derive grouped/object summaries. Optional groupByKey, groupLabelKey, aggregations, sort. Optional drillDown opens URL with row values (urlTemplate placeholders, paramKeys).",
+    requiredFields: ["type", "id", "dataSource", "config.columns or config.summary"],
+    optionalFields: ["title", "config.groupByKey", "config.groupLabelKey", "config.summary", "config.aggregations", "config.sort", "config.drillDown"],
+  },
+  {
+    type: "cardView",
+    description: "Record-browsing widget rendered as responsive cards. Configure titleKey, optional subtitleKey, badges, metadata rows, and an optional primaryMetric with compact or detailed templates.",
+    requiredFields: ["type", "id", "dataSource", "config.titleKey"],
+    optionalFields: ["title", "width", "height", "config.subtitleKey", "config.badges", "config.metadata", "config.primaryMetric", "config.template", "config.emptyStateText"],
   },
   {
     type: "barChart",
@@ -108,9 +114,9 @@ export const supportedWidgets = [
   },
   {
     type: "kpi",
-    description: "Single value widget that reads one field from the first query row. Optional trend shows a sparkline from first N rows.",
+    description: "Single value widget that reads one field from the first query row or aggregates the full result set. Optional trend shows a sparkline from first N rows.",
     requiredFields: ["type", "id", "dataSource", "config.valueKey"],
-    optionalFields: ["title", "config.label", "config.format", "config.currencyCode", "config.decimalPlaces", "config.trend"],
+    optionalFields: ["title", "config.label", "config.aggregation", "config.format", "config.currencyCode", "config.decimalPlaces", "config.prefix", "config.suffix", "config.trend"],
   },
   {
     type: "stackedBarChart",
@@ -144,7 +150,7 @@ ReportSpec is the public DSL for AI-authored reporting in Prism Reporting. Agent
 4. Define \`dataSources\` as an object keyed by data source id.
 5. Every filter and widget \`dataSource\` must reference an existing key in \`dataSources\`.
 6. Use only supported filter types: \`select\`, \`multiSelect\`, \`dateRange\`, \`search\`, \`numericRange\`.
-7. Use only supported widget types: \`table\`, \`barChart\`, \`lineChart\`, \`areaChart\`, \`pieChart\`, \`doughnutChart\`, \`stackedBarChart\`, \`funnelChart\`, \`scatterChart\`, \`kpi\`.
+7. Use only supported widget types: \`table\`, \`cardView\`, \`barChart\`, \`lineChart\`, \`areaChart\`, \`pieChart\`, \`doughnutChart\`, \`stackedBarChart\`, \`funnelChart\`, \`scatterChart\`, \`kpi\`.
 8. **Filter ids must be unique** within \`filters\`; **widget ids must be unique** within \`widgets\`.
 9. **Sections and tabs reference widgets by id**: Every value in \`sections[].widgetIds\` and \`tabs[].widgetIds\` must be exactly one of the \`id\` values from \`spec.widgets\`. Define all widgets in \`widgets\` first (each with a unique \`id\`), then use those same ids in \`sections\` or \`tabs\`; do not reference ids that are not in \`widgets\`.
 10. When query metadata is available, use only published query names and field keys.
@@ -196,7 +202,8 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 
 | Type        | Required fields                           | Optional fields                                      |
 |------------|-------------------------------------------|------------------------------------------------------|
-| \`table\`    | \`type\`, \`id\`, \`dataSource\`, \`config.columns\` | \`title\`, \`width\`, \`height\`, \`config.groupByKey\`, \`config.groupLabelKey\`, \`config.aggregations\`, \`config.sort\`, \`config.drillDown\` |
+| \`table\`    | \`type\`, \`id\`, \`dataSource\`, \`config.columns\` or \`config.summary\` | \`title\`, \`width\`, \`height\`, \`config.groupByKey\`, \`config.groupLabelKey\`, \`config.summary\`, \`config.aggregations\`, \`config.sort\`, \`config.drillDown\` |
+| \`cardView\` | \`type\`, \`id\`, \`dataSource\`, \`config.titleKey\` | \`title\`, \`width\`, \`height\`, \`config.subtitleKey\`, \`config.badges\`, \`config.metadata\`, \`config.primaryMetric\`, \`config.template\`, \`config.emptyStateText\` |
 | \`barChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\`                          |
 | \`stackedBarChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.series\` | \`title\`, \`width\`, \`height\` |
 | \`lineChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\` (multiple lines)       |
@@ -205,16 +212,17 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 | \`doughnutChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
 | \`funnelChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
 | \`scatterChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.xKey\`, \`config.yKey\` | \`title\`, \`width\`, \`height\`, \`config.zKey\` |
-| \`kpi\`      | \`type\`, \`id\`, \`dataSource\`, \`config.valueKey\`  | \`title\`, \`width\`, \`height\`, \`config.label\`, \`config.format\`, \`config.currencyCode\`, \`config.decimalPlaces\`, \`config.trend\` |
+| \`kpi\`      | \`type\`, \`id\`, \`dataSource\`, \`config.valueKey\`  | \`title\`, \`width\`, \`height\`, \`config.label\`, \`config.aggregation\`, \`config.format\`, \`config.currencyCode\`, \`config.decimalPlaces\`, \`config.prefix\`, \`config.suffix\`, \`config.trend\` |
 
-- **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`). Use \`groupByKey\` to group rows; \`groupLabelKey\` sets section header label. \`config.aggregations\` is an optional array of \`{ key, op }\`; footer row shows aggregated values. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default).
+- **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`) for raw row tables. \`config.summary\` is an optional array of \`{ key, op }\` where \`op\` is one of \`sum | avg | min | max | count | latest | earliest | distinct\`; when present, the engine derives one summary row across the whole dataset or one summary row per \`groupByKey\`. If \`config.columns\` is omitted in summary mode, columns are derived automatically. Use \`groupByKey\` to group raw rows or to build grouped summary rows; \`groupLabelKey\` sets the section/header label or alternate group field. \`config.aggregations\` is an optional array of \`{ key, op }\`; footer row shows aggregated values. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default). Summary tables should use full-result delivery rather than paginatedList so reducers see the complete filtered dataset.
+- **cardView**: renders each row as a card. \`config.titleKey\` is required. Optional \`subtitleKey\`, \`badges\`, and \`metadata\` are arrays of \`{ key, label? }\` bound to row fields. Optional \`primaryMetric\` is \`{ key, label?, format?, currencyCode?, decimalPlaces?, prefix?, suffix? }\` and uses the same formatting options as KPIs. Optional \`template\` is \`"compact"\` or \`"detailed"\`; omit to use \`"detailed"\`. Optional \`emptyStateText\` customizes the no-results message. \`cardView\` can use paginatedList delivery for record browsing or fullVisual for full result grids.
 - **barChart**: \`categoryKey\` and \`valueKey\` are field keys from the query result.
 - **stackedBarChart**: \`config.categoryKey\` for x-axis; \`config.series\` is an array of \`{ key, label? }\` (one stack segment per series key).
 - **lineChart**: \`categoryKey\` (x-axis) and \`valueKey\` (y-axis); data is ordered by category. Optional \`config.series\` for multiple lines (\`{ key, label }\` per series).
 - **areaChart**: same data contract as \`lineChart\`, but rendered as filled trend areas. Optional \`config.series\` for multiple areas.
 - **pieChart** / **doughnutChart** / **funnelChart**: use \`categoryKey\` and \`valueKey\`.
 - **scatterChart**: use \`xKey\` and \`yKey\`; optional \`zKey\` enables bubble-size rendering.
-- **kpi**: displays one value from the first row; \`format\` (\`number\`, \`currency\`, \`percent\`, \`plain\`), optional \`currencyCode\`, \`decimalPlaces\`. Optional \`config.trend\`: \`{ dataKey: string }\`; when set, a sparkline is shown from the first N rows using that dataKey (omitted if no rows).
+- **kpi**: displays one value from the first row by default. Optional \`config.aggregation\`: \`{ key, op }\` with \`op\` in \`sum | avg | min | max | count\` aggregates the full result set before rendering. \`format\` (\`number\`, \`currency\`, \`percent\`, \`plain\`) supports optional \`currencyCode\`, \`decimalPlaces\`, \`prefix\`, and \`suffix\`. Optional \`config.trend\`: \`{ dataKey: string }\`; when set, a sparkline is shown from the first N rows using that dataKey (omitted if no rows).
 
 ## Presets (optional)
 
@@ -668,7 +676,7 @@ const reportSpecJsonSchema = {
               config: {
                 type: "object",
                 additionalProperties: false,
-                required: ["columns"],
+                anyOf: [{ required: ["columns"] }, { required: ["summary"] }],
                 properties: {
                   columns: {
                     type: "array",
@@ -693,6 +701,22 @@ const reportSpecJsonSchema = {
                   groupLabelKey: {
                     type: "string",
                     description: "Row field key for group section label; defaults to group value.",
+                  },
+                  summary: {
+                    type: "array",
+                    description: "Optional summary reducers. Without groupByKey this produces one derived row; with groupByKey it produces one summary row per group.",
+                    items: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["key", "op"],
+                      properties: {
+                        key: { type: "string" },
+                        op: {
+                          type: "string",
+                          enum: ["sum", "avg", "min", "max", "count", "latest", "earliest", "distinct"],
+                        },
+                      },
+                    },
                   },
                   aggregations: {
                     type: "array",
@@ -764,6 +788,80 @@ const reportSpecJsonSchema = {
             additionalProperties: false,
             required: ["type", "id", "dataSource", "config"],
             properties: {
+              type: { const: "cardView" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps card views to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps card views to at least 220px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["titleKey"],
+                properties: {
+                  titleKey: { type: "string", description: "Field key used as the main card title." },
+                  subtitleKey: { type: "string", description: "Optional field key rendered under the title." },
+                  badges: {
+                    type: "array",
+                    description: "Optional badges rendered from row field values.",
+                    items: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["key"],
+                      properties: {
+                        key: { type: "string" },
+                        label: { type: "string" },
+                      },
+                    },
+                  },
+                  metadata: {
+                    type: "array",
+                    description: "Optional metadata rows rendered as label/value pairs.",
+                    items: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["key"],
+                      properties: {
+                        key: { type: "string" },
+                        label: { type: "string" },
+                      },
+                    },
+                  },
+                  primaryMetric: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["key"],
+                    properties: {
+                      key: { type: "string", description: "Field key rendered as the card's primary metric." },
+                      label: { type: "string" },
+                      format: {
+                        type: "string",
+                        enum: ["number", "percent", "currency", "plain"],
+                      },
+                      currencyCode: { type: "string", description: "ISO 4217 currency code (e.g. USD)." },
+                      decimalPlaces: { type: "integer", minimum: 0, description: "Number of decimal places for numeric display." },
+                      prefix: { type: "string", description: "Optional text displayed before the formatted metric." },
+                      suffix: { type: "string", description: "Optional text displayed after the formatted metric." },
+                    },
+                  },
+                  template: {
+                    type: "string",
+                    enum: ["compact", "detailed"],
+                    description: "Optional card layout template. Defaults to detailed.",
+                  },
+                  emptyStateText: {
+                    type: "string",
+                    description: "Optional message shown when no rows are returned.",
+                  },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
               type: { const: "barChart" },
               id: { type: "string" },
               title: { type: "string" },
@@ -779,6 +877,7 @@ const reportSpecJsonSchema = {
                   valueKey: { type: "string" },
                   series: {
                     type: "array",
+                    minItems: 1,
                     items: {
                       type: "object",
                       additionalProperties: false,
@@ -789,6 +888,85 @@ const reportSpecJsonSchema = {
                       },
                     },
                   },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "areaChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["categoryKey", "valueKey"],
+                properties: {
+                  categoryKey: { type: "string" },
+                  valueKey: { type: "string" },
+                  series: {
+                    type: "array",
+                    minItems: 1,
+                    items: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["key", "label"],
+                      properties: {
+                        key: { type: "string" },
+                        label: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "pieChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["categoryKey", "valueKey"],
+                properties: {
+                  categoryKey: { type: "string" },
+                  valueKey: { type: "string" },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "doughnutChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["categoryKey", "valueKey"],
+                properties: {
+                  categoryKey: { type: "string" },
+                  valueKey: { type: "string" },
                 },
               },
             },
@@ -844,6 +1022,19 @@ const reportSpecJsonSchema = {
                 required: ["valueKey"],
                 properties: {
                   valueKey: { type: "string" },
+                  aggregation: {
+                    type: "object",
+                    additionalProperties: false,
+                    required: ["key", "op"],
+                    properties: {
+                      key: { type: "string", description: "Field key to aggregate across the full result set." },
+                      op: {
+                        type: "string",
+                        enum: ["sum", "avg", "min", "max", "count"],
+                        description: "Aggregation operation applied before rendering the KPI value.",
+                      },
+                    },
+                  },
                   label: { type: "string" },
                   format: {
                     type: "string",
@@ -851,6 +1042,8 @@ const reportSpecJsonSchema = {
                   },
                   currencyCode: { type: "string", description: "ISO 4217 currency code (e.g. USD)." },
                   decimalPlaces: { type: "integer", minimum: 0, description: "Number of decimal places for numeric display." },
+                  prefix: { type: "string", description: "Optional text displayed before the formatted KPI value." },
+                  suffix: { type: "string", description: "Optional text displayed after the formatted KPI value." },
                   trend: {
                     type: "object",
                     description: "Optional sparkline from first N rows using dataKey.",
@@ -895,6 +1088,51 @@ const reportSpecJsonSchema = {
                       },
                     },
                   },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "funnelChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["categoryKey", "valueKey"],
+                properties: {
+                  categoryKey: { type: "string" },
+                  valueKey: { type: "string" },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "scatterChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["xKey", "yKey"],
+                properties: {
+                  xKey: { type: "string" },
+                  yKey: { type: "string" },
+                  zKey: { type: "string" },
                 },
               },
             },
@@ -974,6 +1212,31 @@ const exampleBarChart = {
       dataSource: "tasksByOwner",
       config: {
         categoryKey: "owner",
+        valueKey: "count",
+      },
+    },
+  ],
+};
+
+const examplePieChart = {
+  id: "tasks-by-status-share",
+  title: "Tasks by Status Share",
+  layout: "singleColumn",
+  dataSources: {
+    tasksByStatus: {
+      name: "tasks-by-status",
+      query: "tasksByStatus",
+    },
+  },
+  filters: [],
+  widgets: [
+    {
+      type: "pieChart",
+      id: "tasks-by-status-pie",
+      title: "Task Share by Status",
+      dataSource: "tasksByStatus",
+      config: {
+        categoryKey: "status",
         valueKey: "count",
       },
     },
@@ -1362,6 +1625,14 @@ export function getStaticContractResources(): ContractResource[] {
       text: JSON.stringify(exampleBarChart, null, 2),
     },
     {
+      name: "report-spec-example-pie-chart",
+      uri: `report-spec://${REPORT_SPEC_VERSION}/examples/patterns/pie-chart`,
+      title: "Pie Chart ReportSpec Example",
+      description: "Example using a pie chart widget for share-of-total reporting.",
+      mimeType: "application/json",
+      text: JSON.stringify(examplePieChart, null, 2),
+    },
+    {
       name: "report-spec-example-kpi",
       uri: `report-spec://${REPORT_SPEC_VERSION}/examples/patterns/kpi`,
       title: "KPI ReportSpec Example",
@@ -1449,6 +1720,8 @@ export function getExampleByPattern(pattern: string) {
       return exampleBasic;
     case "barChart":
       return exampleBarChart;
+    case "pieChart":
+      return examplePieChart;
     case "kpi":
       return exampleKpi;
     case "multiSource":

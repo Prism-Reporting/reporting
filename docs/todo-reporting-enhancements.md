@@ -12,92 +12,48 @@ These are now low-friction options in the DSL and renderer:
 - `funnelChart`
 - `scatterChart`
 
+## Newly implemented KPI enhancements
+
+These are now supported for KPI widgets:
+
+- Full-result-set aggregation via `config.aggregation` with `sum | avg | min | max | count`
+- Money and numeric formatting helpers including `currencyCode` and `decimalPlaces`
+- Display `prefix` / `suffix`
+- Validation that aggregation fields exist on the source query
+- Engine-side KPI aggregation without requiring a single pre-aggregated source row
+
 Notes:
 
 - `barChart`, `lineChart`, `stackedBarChart`, `table`, and `kpi` were already supported.
 - `stackedBarChart` already covers the common "stacked column chart" use case because it renders a vertical categorical stacked bar visualization.
 
-## Next TODOs
+## Newly implemented grouped raw summarization
 
-### 1. Summarization KPIs
+These are now supported for table widgets:
 
-Goal: allow prompts like "show total budget spend" without requiring the source query to return a single pre-aggregated row.
+- `config.summary` reducers with `sum | avg | min | max | count | latest | earliest | distinct`
+- Grouped summary rows via `config.groupByKey`
+- Date-aware `latest` / `earliest` reduction for fields like milestone completion dates
+- Summary-only tables that infer columns automatically when `config.columns` is omitted
 
-What needs to be added:
+Notes:
 
-- KPI-level aggregation config, for example:
-  - `aggregation.op`: `sum | avg | min | max | count`
-  - `aggregation.key`: field to aggregate
-- Optional formatting helpers for money totals:
-  - `currencyCode`
-  - `decimalPlaces`
-  - display suffix/prefix
-- Validation rules that ensure aggregated KPI fields exist on the source query
-- Engine support to aggregate the full result set before rendering the KPI
+- Grouped summaries should use full-result delivery, not paginated table delivery, so reducers see the full filtered dataset.
+- `distinct` returns raw arrays in resolved data; the default table renderer displays them as comma-separated values.
 
-Example target:
+## Newly implemented card view
 
-```json
-{
-  "type": "kpi",
-  "id": "totalBudgetSpend",
-  "title": "Total Budget Spend",
-  "dataSource": "projectBudgets",
-  "config": {
-    "valueKey": "budgetSpent",
-    "aggregation": { "op": "sum", "key": "budgetSpent" },
-    "format": "currency",
-    "currencyCode": "USD",
-    "decimalPlaces": 0
-  }
-}
-```
-
-### 2. Raw summarization for grouped records
-
-Goal: support prompts like "give me a raw summary of all group items" and return grouped objects such as milestone summaries with latest completion dates.
-
-What needs to be added:
-
-- A summary-oriented widget or response type that returns grouped object summaries instead of only chart/table primitives
-- Group summary config such as:
-  - `groupByKey`
-  - `fields`
-  - per-field summary operations like `latest`, `earliest`, `count`, `sum`, `distinct`
-- Date-aware reducers for things like latest milestone completion date
-- Optional nested output formatting for "project -> milestones" style breakdowns
-
-Suggested DSL direction:
-
-```json
-{
-  "type": "table",
-  "id": "milestoneSummary",
-  "title": "Milestone Summary",
-  "dataSource": "projectMilestones",
-  "config": {
-    "groupByKey": "projectId",
-    "summary": [
-      { "key": "milestoneName", "op": "distinct" },
-      { "key": "completionDate", "op": "latest" },
-      { "key": "budgetSpent", "op": "sum" }
-    ]
-  }
-}
-```
-
-### 3. Card view
-
-Goal: support record browsing in a richer layout than a plain table.
-
-What needs to be added:
+These are now supported for record-browsing widgets:
 
 - `cardView` widget type
-- Config for title, subtitle, badges, metadata rows, and primary metric
-- Optional compact and detailed card templates
-- Mobile-friendly wrapping/grid behavior
+- Config for `titleKey`, `subtitleKey`, `badges`, `metadata`, and `primaryMetric`
+- Optional `compact` and `detailed` card templates
+- Responsive wrapping/grid behavior with mobile-friendly stacking
+- Pagination support for card-based browsing on `paginatedList` data sources
 
-### 4. Timeline / Gantt chart
+## Next TODOs
+
+### 1. Timeline / Gantt chart
 
 Goal: support project and milestone scheduling views.
 
@@ -108,7 +64,7 @@ What needs to be added:
 - Overlap handling and long-label truncation
 - Possibly a dedicated renderer instead of pure Recharts
 
-### 5. Harder charts still pending
+### 2. Harder charts still pending
 
 These are intentionally deferred because they need more custom semantics or better UX tuning:
 
@@ -123,8 +79,5 @@ Some are now partially covered:
 
 ## Recommended implementation order
 
-1. Add KPI aggregation to support total budget spend and similar prompts
-2. Add grouped raw summarization primitives for milestone/object summaries
-3. Add `cardView`
-4. Add `timelineView` / `ganttChart`
-5. Revisit specialized charts only after the summarization semantics are in place
+1. Add `timelineView` / `ganttChart`
+2. Revisit specialized charts only after the summarization semantics are in place

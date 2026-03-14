@@ -8,43 +8,7 @@ import {
 } from "recharts";
 import type { KpiProps } from "@reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
-
-function formatKpiValue(
-  value: number | string,
-  format?: "number" | "currency" | "percent" | "plain",
-  currencyCode?: string,
-  decimalPlaces?: number
-): string {
-  if (format === "plain" || format == null) {
-    return String(value);
-  }
-  const num = typeof value === "number" ? value : Number(value);
-  if (Number.isNaN(num)) {
-    return String(value);
-  }
-  const opts: Intl.NumberFormatOptions = {};
-  if (decimalPlaces != null) {
-    opts.minimumFractionDigits = decimalPlaces;
-    opts.maximumFractionDigits = decimalPlaces;
-  }
-  switch (format) {
-    case "currency":
-      return new Intl.NumberFormat(undefined, {
-        style: "currency",
-        currency: currencyCode ?? "USD",
-        ...opts,
-      }).format(num);
-    case "percent":
-      return new Intl.NumberFormat(undefined, {
-        style: "percent",
-        ...opts,
-      }).format(num);
-    case "number":
-      return new Intl.NumberFormat(undefined, opts).format(num);
-    default:
-      return String(value);
-  }
-}
+import { formatMetricValue } from "./formatDisplayValue.js";
 
 export function KpiView({
   title,
@@ -53,8 +17,15 @@ export function KpiView({
   collapsed = false,
   onToggleCollapse,
 }: KpiProps) {
-  const { value, label, format, currencyCode, decimalPlaces, trendData } = data;
-  const displayed = formatKpiValue(value, format, currencyCode, decimalPlaces);
+  const { value, label, format, currencyCode, decimalPlaces, prefix, suffix, trendData } = data;
+  const displayed = formatMetricValue(
+    value,
+    format,
+    currencyCode,
+    decimalPlaces,
+    prefix,
+    suffix
+  );
   const trendChartData =
     trendData && trendData.length > 0
       ? trendData.map((v, i) => ({ index: i, value: v }))

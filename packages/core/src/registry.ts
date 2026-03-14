@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { FilterSpec } from "./types";
 import type {
+  ResolvedCardViewData,
   ResolvedTableData,
   ResolvedBarChartData,
   ResolvedStackedBarChartData,
@@ -20,6 +21,10 @@ export interface WidgetFrameProps {
 
 export interface TableWidgetProps extends WidgetFrameProps {
   data: ResolvedTableData;
+}
+
+export interface CardViewProps extends WidgetFrameProps {
+  data: ResolvedCardViewData;
 }
 
 export interface BarChartProps extends WidgetFrameProps {
@@ -70,6 +75,7 @@ export interface FilterBarProps {
  */
 export interface ComponentRegistry {
   table: ComponentType<TableWidgetProps>;
+  cardView: ComponentType<CardViewProps>;
   barChart: ComponentType<BarChartProps>;
   stackedBarChart: ComponentType<StackedBarChartProps>;
   lineChart: ComponentType<LineChartProps>;

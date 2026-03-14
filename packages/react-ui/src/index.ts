@@ -4,6 +4,7 @@ export { ResolvedQueryInspector } from "./components/ResolvedQueryInspector.js";
 export type { ResolvedQueryInspectorProps } from "./components/ResolvedQueryInspector.js";
 export { defaultRegistry } from "./registry.js";
 export { TableWidgetView } from "./components/TableWidgetView.js";
+export { CardView } from "./components/CardView.js";
 export { BarChartView } from "./components/BarChartView.js";
 export { StackedBarChartView } from "./components/StackedBarChartView.js";
 export { LineChartWidgetView } from "./components/LineChartWidgetView.js";

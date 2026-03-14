@@ -24,6 +24,14 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function formatCellValue(value: unknown): string {
+  if (value == null) return "";
+  if (Array.isArray(value)) {
+    return value.map((item) => formatCellValue(item)).join(", ");
+  }
+  return String(value);
+}
+
 function TableBody({
   rows,
   columns,
@@ -71,7 +79,7 @@ function TableBody({
         return (
           <tr key={i} {...trProps}>
             {columns.map((col) => (
-              <td key={col.key}>{String(row[col.key] ?? "")}</td>
+              <td key={col.key}>{formatCellValue(row[col.key])}</td>
             ))}
             {drillDown && (
               <td className="report-table-drill-cell">
@@ -111,7 +119,7 @@ function TableFooter({
       <tr className="report-table-footer">
         {columns.map((col) => (
           <td key={col.key}>
-            {col.key === "_drill" ? "" : footer[col.key] != null ? String(footer[col.key]) : ""}
+            {col.key === "_drill" ? "" : formatCellValue(footer[col.key])}
           </td>
         ))}
       </tr>

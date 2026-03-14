@@ -33,6 +33,7 @@ The server publishes versioned resources under `report-spec://v1/...`:
 - `report-spec://v1/schema`
 - `report-spec://v1/examples/basic`
 - `report-spec://v1/examples/patterns/bar-chart`
+- `report-spec://v1/examples/patterns/pie-chart`
 - `report-spec://v1/examples/patterns/kpi`
 - `report-spec://v1/examples/patterns/multi-source`
 - `report-spec://v1/changelog`
@@ -53,7 +54,7 @@ The server publishes versioned resources under `report-spec://v1/...`:
   - Returns supported filter types and required fields.
 
 - **get_report_spec_example**
-  - `pattern` (`basic` | `barChart` | `kpi` | `multiSource`): Example pattern to fetch.
+  - `pattern` (`basic` | `barChart` | `pieChart` | `kpi` | `multiSource`): Example pattern to fetch.
 
 - **list_available_queries**
   - Returns query metadata configured by the host.

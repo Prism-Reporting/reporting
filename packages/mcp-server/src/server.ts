@@ -231,7 +231,7 @@ export function createReportingMcpServer(
       description: "Return a valid example ReportSpec for a common reporting pattern.",
       inputSchema: {
         pattern: z
-          .enum(["basic", "barChart", "kpi", "multiSource"])
+          .enum(["basic", "barChart", "pieChart", "kpi", "multiSource"])
           .describe("The example pattern to retrieve."),
       },
     },

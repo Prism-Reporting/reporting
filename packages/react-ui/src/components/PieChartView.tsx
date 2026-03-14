@@ -3,11 +3,11 @@ import {
   Pie,
   Cell,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import type { DoughnutChartProps, PieChartProps } from "@reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
+import { ChartLegend } from "./ChartLegend.js";
 
 const SLICE_COLORS = [
   "#3b82f6",
@@ -28,6 +28,10 @@ function PieLikeChart({
   testId,
 }: (PieChartProps | DoughnutChartProps) & { doughnut?: boolean; testId: string }) {
   const { data: chartData, categoryKey, valueKey } = data;
+  const legendItems = chartData.map((entry, index) => ({
+    color: SLICE_COLORS[index % SLICE_COLORS.length],
+    label: String(entry[categoryKey] ?? ""),
+  }));
 
   return (
     <div
@@ -41,27 +45,29 @@ function PieLikeChart({
         onToggleCollapse={onToggleCollapse}
       />
       {!collapsed && (
-        <div className="report-chart-container">
-          <ResponsiveContainer width="100%" height="100%">
-            <RechartsPieChart>
-              <Pie
-                data={chartData}
-                dataKey={valueKey}
-                nameKey={categoryKey}
-                cx="50%"
-                cy="50%"
-                outerRadius="80%"
-                innerRadius={doughnut ? "52%" : 0}
-                paddingAngle={2}
-              >
-                {chartData.map((_, index) => (
-                  <Cell key={index} fill={SLICE_COLORS[index % SLICE_COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }} />
-              <Legend />
-            </RechartsPieChart>
-          </ResponsiveContainer>
+        <div className="report-chart-body">
+          <div className="report-chart-container">
+            <ResponsiveContainer width="100%" height="100%">
+              <RechartsPieChart>
+                <Pie
+                  data={chartData}
+                  dataKey={valueKey}
+                  nameKey={categoryKey}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius="76%"
+                  innerRadius={doughnut ? "52%" : 0}
+                  paddingAngle={2}
+                >
+                  {chartData.map((_, index) => (
+                    <Cell key={index} fill={SLICE_COLORS[index % SLICE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e5e7eb" }} />
+              </RechartsPieChart>
+            </ResponsiveContainer>
+          </div>
+          <ChartLegend items={legendItems} />
         </div>
       )}
     </div>
