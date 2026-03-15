@@ -132,8 +132,8 @@ describe("@reporting/agent-kit", () => {
     assert.match(first, /Use targeted `preview_query` calls with `fields` and `inspect` options/i);
     assert.match(first, /For every chart, timeline, funnel, scatter, bubble, pie, bar, line, area, or other visual widget/i);
     assert.match(first, /preview each unique query-plus-param combination before you call `apply_report_spec`/i);
-    assert.match(first, /wait for the `preview_query` result before you draft or submit the next spec/i);
-    assert.match(first, /conditional formatting rules, thresholds, grouping values, drill-down placeholders/i);
+    assert.match(first, /wait for the required `preview_query` result before you draft or submit the next spec/i);
+    assert.match(first, /thresholds, grouping values, conditional formatting rules, drill-down placeholders/i);
     assert.match(first, /Never emit DSL content that depends on concrete record values until you have verified those values/i);
     assert.match(first, /Before calling `apply_report_spec`, make sure every chart or other visual widget/i);
     assert.match(first, /Do not call `apply_report_spec`.*required `preview_query` call has completed/i);
