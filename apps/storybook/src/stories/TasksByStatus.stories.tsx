@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
 import { tasksDataProvider } from "../mock-data";
 import type { ReportSpec } from "@reporting/core";
+import { reportStoryParameters, withReportFrame } from "../story-support/frames";
 
 const tasksByStatusSpec: ReportSpec = {
   id: "tasks-by-status",
@@ -55,10 +56,9 @@ const tasksByStatusSpec: ReportSpec = {
 
 const meta: Meta<typeof ReportRenderer> = {
   component: ReportRenderer,
-  title: "Reports/Tasks by Status",
-  parameters: {
-    layout: "padded",
-  },
+  title: "Reports/Operations/Tasks by Status",
+  parameters: reportStoryParameters,
+  decorators: [withReportFrame],
 };
 
 export default meta;

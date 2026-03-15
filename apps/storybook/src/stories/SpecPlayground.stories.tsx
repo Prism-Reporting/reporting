@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import type { ChangeEvent } from "react";
 import { useState } from "react";
 import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
 import { tasksDataProvider } from "../mock-data";
 import type { ReportSpec } from "@reporting/core";
+import { reportStoryParameters, withReportFrame } from "../story-support/frames";
 
 const defaultSpec: ReportSpec = {
   id: "playground",
@@ -47,10 +49,9 @@ const defaultSpec: ReportSpec = {
 
 const meta: Meta<typeof ReportRenderer> = {
   component: ReportRenderer,
-  title: "Reports/Spec Playground",
-  parameters: {
-    layout: "padded",
-  },
+  title: "Reports/Playground/Spec Playground",
+  parameters: reportStoryParameters,
+  decorators: [withReportFrame],
 };
 
 export default meta;
@@ -87,7 +88,7 @@ function SpecPlaygroundWrapper() {
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)}
               style={{ padding: "0.25rem 0.5rem", minWidth: 200 }}
             />
           </label>
@@ -95,7 +96,7 @@ function SpecPlaygroundWrapper() {
             Layout:{" "}
             <select
               value={layout}
-              onChange={(e) =>
+              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
                 setLayout(e.target.value as "singleColumn" | "twoColumn")
               }
               style={{ padding: "0.25rem 0.5rem" }}

@@ -26,7 +26,18 @@ export const reportingMcpToolSchemas = {
   list_supported_filters: { inputSchema: z.object({}) },
   get_report_spec_example: {
     inputSchema: z.object({
-      pattern: z.enum(["basic", "barChart", "pieChart", "kpi", "multiSource"]).optional(),
+      pattern: z
+        .enum([
+          "basic",
+          "barChart",
+          "pieChart",
+          "kpi",
+          "multiSource",
+          "groupedTable",
+          "mixedFiltersWidgets",
+          "timeline",
+        ])
+        .optional(),
     }),
   },
   list_available_queries: { inputSchema: z.object({}) },

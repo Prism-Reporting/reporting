@@ -1,6 +1,7 @@
 import type { CardViewProps } from "@reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { formatMetricValue, stringifyDisplayValue } from "./formatDisplayValue.js";
+import { getCardConditionalFormatting } from "./conditionalFormatting.js";
 
 function getBadgeValues(value: unknown): string[] {
   if (value == null) return [];
@@ -18,8 +19,17 @@ export function CardView({
   collapsed = false,
   onToggleCollapse,
 }: CardViewProps) {
-  const { rows, titleKey, subtitleKey, badges, metadata, primaryMetric, template, emptyStateText } =
-    data;
+  const {
+    rows,
+    titleKey,
+    subtitleKey,
+    badges,
+    metadata,
+    primaryMetric,
+    template,
+    emptyStateText,
+    conditionalFormatting,
+  } = data;
 
   return (
     <div
@@ -29,6 +39,7 @@ export function CardView({
       <WidgetHeader
         title={title}
         queryInfo={queryInfo}
+        conditionalFormatting={conditionalFormatting}
         collapsed={collapsed}
         onToggleCollapse={onToggleCollapse}
       />
@@ -56,11 +67,16 @@ export function CardView({
                   : metricValue != null
                     ? stringifyDisplayValue(metricValue)
                     : "";
+              const highlight = getCardConditionalFormatting(conditionalFormatting, row);
 
               return (
                 <article
                   key={index}
-                  className={`report-card report-card-${template}`}
+                  className={`report-card report-card-${template}${
+                    highlight ? " report-conditional-highlight" : ""
+                  }`}
+                  data-highlight-tone={highlight?.tone}
+                  data-highlight-label={highlight?.label}
                 >
                   <div className="report-card-topline">
                     <div className="report-card-heading-block">

@@ -2,7 +2,7 @@
 
 MCP server that exposes tools for Prism Reporting:
 
-- **Resources** — Versioned ReportSpec guide, schema, examples, changelog, and query catalog.
+- **Resources** — Versioned ReportSpec guide, schema, examples, changelog, query catalog, and semantic grounding context.
 - **validate_report_spec** — Validate a ReportSpec object with `@reporting/core`.
 - **list_supported_widgets** — Discover the widget primitives supported by the DSL.
 - **list_supported_filters** — Discover the filter primitives supported by the DSL.
@@ -36,8 +36,12 @@ The server publishes versioned resources under `report-spec://v1/...`:
 - `report-spec://v1/examples/patterns/pie-chart`
 - `report-spec://v1/examples/patterns/kpi`
 - `report-spec://v1/examples/patterns/multi-source`
+- `report-spec://v1/examples/patterns/grouped-table`
+- `report-spec://v1/examples/patterns/mixed-filters-widgets`
+- `report-spec://v1/examples/patterns/timeline`
 - `report-spec://v1/changelog`
 - `report-spec://v1/query-catalog`
+- `report-spec://v1/semantic-context` (when the host provides semantic grounding context)
 
 ## Tools
 
@@ -48,13 +52,13 @@ The server publishes versioned resources under `report-spec://v1/...`:
   - Returns `{ version, valid, errors, diagnostics }`. When the server is created with a `policy` option (see below), the policy is run after structural validation and any policy errors are merged into the response.
 
 - **list_supported_widgets**
-  - Returns supported widget types and required fields.
+  - Returns supported widget types and required/optional fields, including `cardView`, `spiralChart`, `bubbleChart`, `timelineView`, and `ganttChart`.
 
 - **list_supported_filters**
-  - Returns supported filter types and required fields.
+  - Returns supported filter types and required/optional fields, including `multiSelect`, `numericRange`, and scoped `groupIds`.
 
 - **get_report_spec_example**
-  - `pattern` (`basic` | `barChart` | `pieChart` | `kpi` | `multiSource`): Example pattern to fetch.
+  - `pattern` (`basic` | `barChart` | `pieChart` | `kpi` | `multiSource` | `groupedTable` | `mixedFiltersWidgets` | `timeline`): Example pattern to fetch.
 
 - **list_available_queries**
   - Returns query metadata configured by the host.

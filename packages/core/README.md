@@ -16,9 +16,13 @@ The ReportSpec is a structured DSL that describes reports. AI tools (future phas
 | `dataSources` | Record<string, DataSourceSpec> | Yes | Named data sources |
 | `filters` | FilterSpec[] | Yes | Filter definitions (may be empty) |
 | `widgets` | WidgetSpec[] | Yes | Visual widgets |
+| `groups` | ReportGroupSpec[] | No | Optional logical widget groups used to scope filters to part of a report. |
 | `presets` | ReportSpecPreset[] | No | Optional named filter states (e.g. "This quarter"); host applies `preset.filterState`. |
 | `version` | string | No | Optional report version (e.g. "1.0", "2024.03"); exposed on `ResolvedReport.version` for UI display. |
 | `refreshInterval` | number | No | Optional interval in seconds; when set, the **host** should re-call `resolveReport` after that interval (engine does not implement timers). Hosts may cache by spec.id + filterState and TTL. |
+| `layoutOptions` | LayoutOptions | No | Optional `columnGap` / `rowGap` CSS hints for the report grid. |
+| `sections` | ReportSectionSpec[] | No | Optional titled widget groupings; widgets are referenced by id. |
+| `tabs` | ReportTabSpec[] | No | Optional tabbed layout; takes precedence over sections. |
 | `owner` | string | No | Optional owner (e.g. user id or email); pass-through for governance and UI (e.g. "Owner: {owner}"). |
 | `author` | string | No | Optional author (e.g. user id or email); pass-through for UI (e.g. "By {author}"). |
 
@@ -33,20 +37,27 @@ The ReportSpec is a structured DSL that describes reports. AI tools (future phas
 
 ### FilterSpec Variants
 
-- **SelectFilter**: `type: "select"`, `options: { value, label }[]`, `paramKey?`
-- **DateRangeFilter**: `type: "dateRange"`, `paramKeyFrom?`, `paramKeyTo?`
-- **SearchFilter**: `type: "search"`, `paramKey?`, `placeholder?`
+- **SelectFilter**: `type: "select"`, `options: { value, label }[]`, `groupIds?`, `paramKey?`
+- **MultiSelectFilter**: `type: "multiSelect"`, `options: { value, label }[]`, `groupIds?`, `paramKey?`
+- **DateRangeFilter**: `type: "dateRange"`, `groupIds?`, `paramKeyFrom?`, `paramKeyTo?`
+- **SearchFilter**: `type: "search"`, `groupIds?`, `paramKey?`, `placeholder?`
+- **NumericRangeFilter**: `type: "numericRange"`, `groupIds?`, `min?`, `max?`, `step?`, `paramKeyFrom?`, `paramKeyTo?`
 
 All filters require: `id`, `label`, `dataSource` (must reference a key in `dataSources`).
 
 ### WidgetSpec Variants
 
-- **TableWidget**: `type: "table"`, `config.columns?: { key, label }[]`, `config.summary?: { key, op }[]`
+- **TableWidget**: `type: "table"`, `config.columns?: { key, label }[]`, `config.summary?: { key, op }[]`, `config.groupByKey?`, `config.groupAggregations?`, `config.drillDown?`
 - **CardViewWidget**: `type: "cardView"`, `config.titleKey`, optional `config.subtitleKey`, `config.badges`, `config.metadata`, `config.primaryMetric`, `config.template`
 - **BarChartWidget**: `type: "barChart"`, `config.categoryKey`, `config.valueKey`
-- **KpiWidget**: `type: "kpi"`, `config.valueKey`, `config.label?`
+- **LineChartWidget** / **AreaChartWidget**: `config.categoryKey`, `config.valueKey`, optional `config.series`
+- **PieChartWidget** / **DoughnutChartWidget** / **SpiralChartWidget** / **FunnelChartWidget**: `config.categoryKey`, `config.valueKey`
+- **StackedBarChartWidget**: `config.categoryKey`, `config.series`
+- **ScatterChartWidget** / **BubbleChartWidget**: `config.xKey`, `config.yKey`, optional or required `config.zKey`
+- **TimelineViewWidget** / **GanttChartWidget**: `config.startDateKey`, `config.endDateKey`, `config.labelKey`, optional `config.groupKey`, `config.statusKey`
+- **KpiWidget**: `type: "kpi"`, `config.valueKey`, `config.label?`, optional aggregation/format/trend settings
 
-All widgets require: `id`, `dataSource`, `config`. `title` is optional.
+All widgets require: `id`, `dataSource`, `config`. `title`, `groupIds`, `width`, and `height` are optional.
 
 Sizing hints:
 

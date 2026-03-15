@@ -5,9 +5,12 @@ import { BarChartView } from "./components/BarChartView.js";
 import { StackedBarChartView } from "./components/StackedBarChartView.js";
 import { LineChartWidgetView } from "./components/LineChartWidgetView.js";
 import { AreaChartView } from "./components/AreaChartView.js";
+import { SpiralChartView } from "./components/SpiralChartView.js";
 import { PieChartView, DoughnutChartView } from "./components/PieChartView.js";
 import { FunnelChartView } from "./components/FunnelChartView.js";
 import { ScatterChartView } from "./components/ScatterChartView.js";
+import { BubbleChartView } from "./components/BubbleChartView.js";
+import { TimelineChartView } from "./components/TimelineChartView.js";
 import { KpiView } from "./components/KpiView.js";
 import { FilterBar } from "./components/FilterBar.js";
 
@@ -18,10 +21,14 @@ export const defaultRegistry: ComponentRegistry = {
   stackedBarChart: StackedBarChartView,
   lineChart: LineChartWidgetView,
   areaChart: AreaChartView,
+  spiralChart: SpiralChartView,
   pieChart: PieChartView,
   doughnutChart: DoughnutChartView,
   funnelChart: FunnelChartView,
   scatterChart: ScatterChartView,
+  bubbleChart: BubbleChartView,
+  timelineView: TimelineChartView,
+  ganttChart: TimelineChartView,
   kpi: KpiView,
   filterBar: FilterBar,
 };

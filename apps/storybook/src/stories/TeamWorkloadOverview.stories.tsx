@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
 import { workloadDataProvider } from "../mock-data";
 import type { ReportSpec } from "@reporting/core";
+import { reportStoryParameters, withReportFrame } from "../story-support/frames";
 
 const teamWorkloadSpec: ReportSpec = {
   id: "team-workload",
@@ -57,10 +58,9 @@ const teamWorkloadSpec: ReportSpec = {
 
 const meta: Meta<typeof ReportRenderer> = {
   component: ReportRenderer,
-  title: "Reports/Team Workload Overview",
-  parameters: {
-    layout: "padded",
-  },
+  title: "Reports/Operations/Team Workload Overview",
+  parameters: reportStoryParameters,
+  decorators: [withReportFrame],
 };
 
 export default meta;

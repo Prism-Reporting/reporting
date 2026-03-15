@@ -12,222 +12,213 @@ Full reference for Prism Reporting ReportSpec. Types align with `@reporting/core
 | dataSources | Record<string, DataSourceSpec> | yes | Map of source key to data source spec. |
 | filters | FilterSpec[] | yes | Array of filter specs (can be empty). |
 | widgets | WidgetSpec[] | yes | Array of widget specs. |
+| groups | ReportGroupSpec[] | no | Optional logical scopes for filter sharing. |
+| presets | ReportSpecPreset[] | no | Saved filter states. |
+| layoutOptions | { columnGap?, rowGap? } | no | Optional CSS gap hints for the report grid. |
+| sections | ReportSectionSpec[] | no | Optional titled widget groupings. |
+| tabs | ReportTabSpec[] | no | Optional tabbed layout; overrides sections. |
+| version | string | no | Optional report version. |
+| refreshInterval | number | no | Host refresh interval in seconds. |
+| owner | string | no | Governance/display metadata. |
+| author | string | no | Display metadata. |
 
 ## DataSourceSpec
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | name | string | yes | Logical name. |
-| query | string | yes | Query name passed to DataProvider.runQuery (must match backend). |
+| query | string | yes | Query name passed to `DataProvider.runQuery`. |
 | params | Record<string, unknown> | no | Optional default params. |
+| sort | SortItem \| SortItem[] | no | In-memory post-fetch sorting. |
+| limit | number | no | In-memory post-sort row limit. |
+| delivery | { mode, pageSize?, maxRows? } | no | Use `paginatedList`, `fullVisual`, or `summary`. |
+| pagination | { pageSize, pageParamKey? } | no | Legacy paging config. Prefer `delivery`. |
 
-## FilterSpec (discriminated by type)
+## FilterSpec
 
-### SelectFilterSpec (type: "select")
+All filters require `type`, `id`, `label`, and `dataSource`. `dataSource` may be a single source key or an array of keys. `groupIds` is optional on every filter and scopes the filter to part of the report.
 
-| Field | Type | Required |
-|-------|------|----------|
-| type | "select" | yes |
-| id | string | yes |
-| label | string | yes |
-| dataSource | string | yes (must be a key in dataSources) |
-| options | Array<{ value: string, label: string }> | yes |
-| paramKey | string | no |
+| Type | Important fields |
+|------|------------------|
+| `select` | `options`, `paramKey?`, `required?`, `defaultValue?` |
+| `multiSelect` | `options`, `paramKey?`, `required?`, `defaultValue?: string[]` |
+| `dateRange` | `paramKeyFrom?`, `paramKeyTo?`, `required?`, `defaultValue?: { from?, to? }` |
+| `search` | `paramKey?`, `placeholder?`, `required?`, `defaultValue?` |
+| `numericRange` | `min?`, `max?`, `step?`, `paramKeyFrom?`, `paramKeyTo?`, `required?`, `defaultValue?: { from?, to? }` |
 
-### DateRangeFilterSpec (type: "dateRange")
+## WidgetSpec
 
-| Field | Type | Required |
-|-------|------|----------|
-| type | "dateRange" | yes |
-| id | string | yes |
-| label | string | yes |
-| dataSource | string | yes |
-| paramKeyFrom | string | no |
-| paramKeyTo | string | no |
+Every widget supports `id`, `dataSource`, `config`, and optional `title`, `groupIds`, `width`, `height`.
 
-### SearchFilterSpec (type: "search")
+| Type | Required config | Optional highlights |
+|------|------------------|---------------------|
+| `table` | `columns` or `summary` | `groupByKey`, `groupLabelKey`, `summary`, `aggregations`, `groupAggregations`, `groupSummaryLabel`, `grandTotalLabel`, `sort`, `drillDown` |
+| `cardView` | `titleKey` | `subtitleKey`, `badges`, `metadata`, `primaryMetric`, `template`, `emptyStateText` |
+| `barChart` | `categoryKey`, `valueKey` | `series` |
+| `lineChart` | `categoryKey`, `valueKey` | `series` |
+| `areaChart` | `categoryKey`, `valueKey` | `series` |
+| `spiralChart` | `categoryKey`, `valueKey` |  |
+| `pieChart` | `categoryKey`, `valueKey` |  |
+| `doughnutChart` | `categoryKey`, `valueKey` |  |
+| `stackedBarChart` | `categoryKey`, `series` |  |
+| `funnelChart` | `categoryKey`, `valueKey` |  |
+| `scatterChart` | `xKey`, `yKey` | `zKey` |
+| `bubbleChart` | `xKey`, `yKey`, `zKey` | `labelKey`, `seriesKey` |
+| `timelineView` | `startDateKey`, `endDateKey`, `labelKey` | `groupKey`, `statusKey` |
+| `ganttChart` | `startDateKey`, `endDateKey`, `labelKey` | `groupKey`, `statusKey` |
+| `kpi` | `valueKey` | `aggregation`, `label`, `format`, `currencyCode`, `decimalPlaces`, `prefix`, `suffix`, `trend` |
 
-| Field | Type | Required |
-|-------|------|----------|
-| type | "search" | yes |
-| id | string | yes |
-| label | string | yes |
-| dataSource | string | yes |
-| paramKey | string | no |
-| placeholder | string | no |
+## Layout and grouping primitives
 
-## WidgetSpec (discriminated by type)
+- `groups`: `{ id, label?, widgetIds }`
+- `sections`: `{ id, title?, widgetIds, groupIds? }`
+- `tabs`: `{ id, label, widgetIds, groupIds? }`
 
-### TableWidgetSpec (type: "table")
+Notes:
 
-| Field | Type | Required |
-|-------|------|----------|
-| type | "table" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { columns: Array<{ key: string, label: string, type?: "string" \| "number" \| "date" }> } | yes |
+- `sections[].widgetIds`, `tabs[].widgetIds`, and `groups[].widgetIds` must all reference widget ids already defined in `widgets`.
+- Tabs take precedence over sections.
+- Section ids and tab ids also act as implicit filter scope ids, so filters can target them through `groupIds`.
 
-### BarChartWidgetSpec (type: "barChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "barChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, valueKey: string, series?: Array<{ key: string, label: string }> } | yes (categoryKey, valueKey) |
-
-### LineChartWidgetSpec (type: "lineChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "lineChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, valueKey: string, series?: Array<{ key: string, label: string }> } | yes (categoryKey, valueKey) |
-
-### AreaChartWidgetSpec (type: "areaChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "areaChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, valueKey: string, series?: Array<{ key: string, label: string }> } | yes (categoryKey, valueKey) |
-
-### PieChartWidgetSpec (type: "pieChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "pieChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, valueKey: string } | yes |
-
-### DoughnutChartWidgetSpec (type: "doughnutChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "doughnutChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, valueKey: string } | yes |
-
-### StackedBarChartWidgetSpec (type: "stackedBarChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "stackedBarChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, series: Array<{ key: string, label?: string }> } | yes |
-
-### FunnelChartWidgetSpec (type: "funnelChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "funnelChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { categoryKey: string, valueKey: string } | yes |
-
-### ScatterChartWidgetSpec (type: "scatterChart")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "scatterChart" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { xKey: string, yKey: string, zKey?: string } | yes (xKey, yKey) |
-
-### KpiWidgetSpec (type: "kpi")
-
-| Field | Type | Required |
-|-------|------|----------|
-| type | "kpi" | yes |
-| id | string | yes |
-| dataSource | string | yes |
-| title | string | no |
-| config | { valueKey: string, label?: string, format?: "number" \| "percent" \| "currency" } | yes (valueKey) |
-
-## Example: Bar chart by assignee
-
-**Request**: "Show me a bar chart of work items per assignee, with a filter by assignee."
+## Example: Grouped table with scoped filters
 
 ```json
 {
-  "id": "work-items-by-assignee",
-  "title": "Work Items by Assignee",
-  "layout": "singleColumn",
+  "id": "project-milestones",
+  "title": "Project Milestones",
+  "layout": "twoColumn",
+  "layoutOptions": {
+    "columnGap": "1.25rem",
+    "rowGap": "1rem"
+  },
   "dataSources": {
-    "workItems": {
-      "name": "workItems",
-      "query": "workItemsByAssignee"
+    "milestones": {
+      "name": "project-milestones",
+      "query": "projectMilestones",
+      "delivery": {
+        "mode": "fullVisual",
+        "maxRows": 1000
+      }
     }
   },
   "filters": [
     {
-      "type": "select",
-      "id": "assignee",
-      "label": "Assignee",
-      "dataSource": "workItems",
-      "paramKey": "assignee",
+      "type": "multiSelect",
+      "id": "projectStatus",
+      "label": "Project Status",
+      "dataSource": "milestones",
+      "groupIds": ["project-health"],
+      "paramKey": "projectStatus",
       "options": [
-        { "value": "Alice", "label": "Alice" },
-        { "value": "Bob", "label": "Bob" }
+        { "value": "on-track", "label": "On Track" },
+        { "value": "at-risk", "label": "At Risk" },
+        { "value": "off-track", "label": "Off Track" }
       ]
     }
   ],
   "widgets": [
     {
-      "type": "barChart",
-      "id": "assignee-chart",
-      "title": "Work Items per Assignee",
-      "dataSource": "workItems",
+      "type": "table",
+      "id": "milestone-summary",
+      "title": "Milestones by Project",
+      "dataSource": "milestones",
+      "groupIds": ["project-health"],
       "config": {
-        "categoryKey": "assignee",
-        "valueKey": "count"
+        "groupByKey": "projectId",
+        "groupLabelKey": "projectName",
+        "columns": [
+          { "key": "milestoneName", "label": "Milestone" },
+          { "key": "owner", "label": "Owner" },
+          { "key": "plannedDate", "label": "Planned", "type": "date" },
+          { "key": "budgetVariance", "label": "Variance", "type": "number" }
+        ],
+        "groupAggregations": [
+          { "key": "budgetVariance", "op": "sum" }
+        ],
+        "groupSummaryLabel": "Project subtotal",
+        "aggregations": [
+          { "key": "budgetVariance", "op": "sum" }
+        ],
+        "grandTotalLabel": "Portfolio total"
       }
+    }
+  ],
+  "groups": [
+    {
+      "id": "project-health",
+      "label": "Project Health",
+      "widgetIds": ["milestone-summary"]
+    }
+  ],
+  "sections": [
+    {
+      "id": "portfolio-section",
+      "title": "Portfolio Health",
+      "widgetIds": ["milestone-summary"],
+      "groupIds": ["project-health"]
     }
   ]
 }
 ```
 
-## Example: KPI only
-
-**Request**: "Show total count of tasks as a KPI."
+## Example: Timeline and Gantt tabs
 
 ```json
 {
-  "id": "tasks-kpi",
-  "title": "Total Tasks",
+  "id": "release-plan",
+  "title": "Release Plan",
   "layout": "singleColumn",
   "dataSources": {
-    "tasks": {
-      "name": "tasks",
-      "query": "tasks"
-    }
-  },
-  "filters": [],
-  "widgets": [
-    {
-      "type": "kpi",
-      "id": "total-tasks",
-      "title": "Total Tasks",
-      "dataSource": "tasks",
-      "config": {
-        "valueKey": "count",
-        "format": "number"
+    "roadmap": {
+      "name": "release-roadmap",
+      "query": "releaseRoadmap",
+      "delivery": {
+        "mode": "fullVisual",
+        "maxRows": 500
       }
     }
+  },
+  "filters": [
+    {
+      "type": "dateRange",
+      "id": "window",
+      "label": "Timeline Window",
+      "dataSource": "roadmap",
+      "paramKeyFrom": "startFrom",
+      "paramKeyTo": "endTo"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "timelineView",
+      "id": "release-timeline",
+      "title": "Milestone Timeline",
+      "dataSource": "roadmap",
+      "config": {
+        "startDateKey": "startDate",
+        "endDateKey": "endDate",
+        "labelKey": "milestone",
+        "groupKey": "team",
+        "statusKey": "status"
+      }
+    },
+    {
+      "type": "ganttChart",
+      "id": "release-gantt",
+      "title": "Delivery Schedule",
+      "dataSource": "roadmap",
+      "config": {
+        "startDateKey": "startDate",
+        "endDateKey": "endDate",
+        "labelKey": "milestone",
+        "groupKey": "workstream",
+        "statusKey": "status"
+      }
+    }
+  ],
+  "tabs": [
+    { "id": "timeline", "label": "Timeline", "widgetIds": ["release-timeline"] },
+    { "id": "schedule", "label": "Schedule", "widgetIds": ["release-gantt"] }
   ]
 }
 ```

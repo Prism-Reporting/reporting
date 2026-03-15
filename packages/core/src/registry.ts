@@ -7,7 +7,10 @@ import type {
   ResolvedStackedBarChartData,
   ResolvedLineChartData,
   ResolvedPieChartData,
+  ResolvedSpiralChartData,
   ResolvedScatterChartData,
+  ResolvedBubbleChartData,
+  ResolvedTimelineChartData,
   ResolvedKpiData,
   ResolvedQueryExecution,
 } from "./engine";
@@ -47,6 +50,10 @@ export interface PieChartProps extends WidgetFrameProps {
   data: ResolvedPieChartData;
 }
 
+export interface SpiralChartProps extends WidgetFrameProps {
+  data: ResolvedSpiralChartData;
+}
+
 export interface DoughnutChartProps extends WidgetFrameProps {
   data: ResolvedPieChartData;
 }
@@ -61,6 +68,14 @@ export interface FunnelChartProps extends WidgetFrameProps {
 
 export interface ScatterChartProps extends WidgetFrameProps {
   data: ResolvedScatterChartData;
+}
+
+export interface BubbleChartProps extends WidgetFrameProps {
+  data: ResolvedBubbleChartData;
+}
+
+export interface TimelineChartProps extends WidgetFrameProps {
+  data: ResolvedTimelineChartData;
 }
 
 export interface FilterBarProps {
@@ -80,10 +95,14 @@ export interface ComponentRegistry {
   stackedBarChart: ComponentType<StackedBarChartProps>;
   lineChart: ComponentType<LineChartProps>;
   areaChart: ComponentType<AreaChartProps>;
+  spiralChart: ComponentType<SpiralChartProps>;
   pieChart: ComponentType<PieChartProps>;
   doughnutChart: ComponentType<DoughnutChartProps>;
   funnelChart: ComponentType<FunnelChartProps>;
   scatterChart: ComponentType<ScatterChartProps>;
+  bubbleChart: ComponentType<BubbleChartProps>;
+  timelineView: ComponentType<TimelineChartProps>;
+  ganttChart: ComponentType<TimelineChartProps>;
   kpi: ComponentType<KpiProps>;
   filterBar: ComponentType<FilterBarProps>;
 }

@@ -1,18 +1,20 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import type { CardViewProps } from "@reporting/core";
 import { CardView } from "@reporting/react-ui";
-
-const frameStyle = {
-  width: "100%",
-  maxWidth: "1120px",
-};
+import {
+  componentStoryParameters,
+  withComponentFrame,
+} from "../story-support/frames";
 
 const detailedArgs: CardViewProps = {
   title: "Active initiatives",
   data: {
     titleKey: "name",
     subtitleKey: "owner",
-    badges: [{ key: "status" }, { key: "priority" }],
+    badges: [
+      { key: "status", label: "Status" },
+      { key: "priority", label: "Priority" },
+    ],
     metadata: [
       { key: "phase", label: "Phase" },
       { key: "nextMilestone", label: "Next milestone" },
@@ -69,19 +71,33 @@ const compactArgs: CardViewProps = {
   },
 };
 
-const meta: Meta<typeof CardView> = {
-  title: "Components/Cards/Card View",
-  component: CardView,
-  parameters: {
-    layout: "centered",
+const conditionalHighlightingArgs: CardViewProps = {
+  ...detailedArgs,
+  title: "Risk-prioritized initiatives",
+  data: {
+    ...detailedArgs.data,
+    conditionalFormatting: [
+      {
+        target: { type: "card" },
+        when: { field: "status", op: "in", values: ["Blocked", "At Risk"] },
+        tone: "danger",
+        label: "Delivery risk",
+      },
+      {
+        target: { type: "card" },
+        when: { field: "budgetSpent", op: "gt", value: 200000 },
+        tone: "warning",
+        label: "Budget watch",
+      },
+    ],
   },
-  decorators: [
-    (Story) => (
-      <div style={frameStyle}>
-        <Story />
-      </div>
-    ),
-  ],
+};
+
+const meta: Meta<typeof CardView> = {
+  title: "Components/Browsing/Card View",
+  component: CardView,
+  parameters: componentStoryParameters,
+  decorators: [withComponentFrame],
 };
 
 export default meta;
@@ -90,8 +106,30 @@ type Story = StoryObj<typeof meta>;
 
 export const Detailed: Story = {
   args: detailedArgs,
+  parameters: {
+    frame: {
+      maxWidth: "1120px",
+      minHeight: "520px",
+    },
+  },
 };
 
 export const Compact: Story = {
   args: compactArgs,
+  parameters: {
+    frame: {
+      maxWidth: "1120px",
+      minHeight: "420px",
+    },
+  },
+};
+
+export const ConditionalHighlighting: Story = {
+  args: conditionalHighlightingArgs,
+  parameters: {
+    frame: {
+      maxWidth: "1120px",
+      minHeight: "520px",
+    },
+  },
 };

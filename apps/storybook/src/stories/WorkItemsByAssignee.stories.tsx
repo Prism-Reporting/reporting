@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
 import { workItemsByAssigneeDataProvider } from "../mock-data";
 import type { ReportSpec } from "@reporting/core";
+import { reportStoryParameters, withReportFrame } from "../story-support/frames";
 
 const workItemsByAssigneeSpec: ReportSpec = {
   id: "work-items-by-assignee",
@@ -44,10 +45,9 @@ const workItemsByAssigneeSpec: ReportSpec = {
 
 const meta: Meta<typeof ReportRenderer> = {
   component: ReportRenderer,
-  title: "Reports/Work Items by Assignee",
-  parameters: {
-    layout: "padded",
-  },
+  title: "Reports/Analytics/Work Items by Assignee",
+  parameters: reportStoryParameters,
+  decorators: [withReportFrame],
 };
 
 export default meta;

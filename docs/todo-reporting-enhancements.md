@@ -51,33 +51,38 @@ These are now supported for record-browsing widgets:
 - Responsive wrapping/grid behavior with mobile-friendly stacking
 - Pagination support for card-based browsing on `paginatedList` data sources
 
-## Next TODOs
+## Newly implemented timeline / Gantt chart
 
-### 1. Timeline / Gantt chart
+These are now supported for schedule visualizations:
 
-Goal: support project and milestone scheduling views.
+- `timelineView` and `ganttChart` widget types
+- `startDateKey`, `endDateKey`, `labelKey`, `groupKey`, and `statusKey`
+- UTC-safe date normalization for date-only and timestamp inputs
+- Overlap lane assignment within groups for concurrent milestones
+- Dedicated renderer with long-label truncation and responsive stacking
 
-What needs to be added:
+## Newly implemented spiral chart
 
-- `startDateKey`, `endDateKey`, `labelKey`, `groupKey`, `statusKey`
-- Date normalization and timezone-safe rendering
-- Overlap handling and long-label truncation
-- Possibly a dedicated renderer instead of pure Recharts
+These are now supported for expressive ranked radial visualizations:
 
-### 2. Harder charts still pending
+- `spiralChart` widget type
+- `categoryKey` / `valueKey` config matching other category-value charts
+- Dedicated spiral renderer with per-segment labels and legend support
 
-These are intentionally deferred because they need more custom semantics or better UX tuning:
+## Newly implemented bubble chart
 
-- `timelineView` / `ganttChart`
-- `spiralChart`
-- `bubbleChart` with polished legends and size scaling
+These are now supported for dedicated bubble visualizations:
+
+- `bubbleChart` widget type
+- Required `xKey`, `yKey`, and `zKey`
+- Optional `labelKey` for clearer tooltip labels
+- Optional `seriesKey` for grouped color legends
+- Dedicated renderer with normalized size scaling and bubble-size legend
 
 Some are now partially covered:
 
-- `bubbleChart` can often be modeled with the new `scatterChart` using `zKey`
 - `stackedColumnChart` is covered by `stackedBarChart`
 
 ## Recommended implementation order
 
-1. Add `timelineView` / `ganttChart`
-2. Revisit specialized charts only after the summarization semantics are in place
+1. Continue iterating on chart polish and authoring ergonomics as new use cases appear

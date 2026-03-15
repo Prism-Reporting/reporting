@@ -1,6 +1,6 @@
 # Natural Language → ReportSpec Mapping Examples
 
-This document provides sample mappings from natural language requests to ReportSpec. These examples inform future AI tool design.
+This document provides sample mappings from natural language requests to ReportSpec. These examples inform future AI tool design and should stay aligned with what the MCP contract, core types, and renderer actually support.
 
 ## Example 1: Tasks by Status
 
@@ -165,11 +165,167 @@ This document provides sample mappings from natural language requests to ReportS
 
 ---
 
+## Example 4: Grouped milestones table with scoped filters
+
+**User request**: "Show milestones grouped by project, let me filter only this section by project status and budget variance, and include project subtotals plus a portfolio total."
+
+**ReportSpec**:
+
+```json
+{
+  "id": "project-milestones",
+  "title": "Project Milestones",
+  "layout": "twoColumn",
+  "layoutOptions": {
+    "columnGap": "1.25rem",
+    "rowGap": "1rem"
+  },
+  "dataSources": {
+    "milestones": {
+      "name": "project-milestones",
+      "query": "projectMilestones",
+      "delivery": {
+        "mode": "fullVisual",
+        "maxRows": 1000
+      }
+    }
+  },
+  "filters": [
+    {
+      "type": "multiSelect",
+      "id": "projectStatus",
+      "label": "Project Status",
+      "dataSource": "milestones",
+      "groupIds": ["project-health"],
+      "paramKey": "projectStatus",
+      "options": [
+        { "value": "on-track", "label": "On Track" },
+        { "value": "at-risk", "label": "At Risk" },
+        { "value": "off-track", "label": "Off Track" }
+      ]
+    },
+    {
+      "type": "numericRange",
+      "id": "budgetVariance",
+      "label": "Budget Variance",
+      "dataSource": "milestones",
+      "groupIds": ["project-health"],
+      "paramKeyFrom": "budgetVarianceMin",
+      "paramKeyTo": "budgetVarianceMax"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "table",
+      "id": "milestone-summary",
+      "title": "Milestones by Project",
+      "dataSource": "milestones",
+      "groupIds": ["project-health"],
+      "config": {
+        "groupByKey": "projectId",
+        "groupLabelKey": "projectName",
+        "columns": [
+          { "key": "milestoneName", "label": "Milestone" },
+          { "key": "owner", "label": "Owner" },
+          { "key": "plannedDate", "label": "Planned", "type": "date" },
+          { "key": "budgetVariance", "label": "Variance", "type": "number" }
+        ],
+        "groupAggregations": [
+          { "key": "budgetVariance", "op": "sum" }
+        ],
+        "groupSummaryLabel": "Project subtotal",
+        "aggregations": [
+          { "key": "budgetVariance", "op": "sum" }
+        ],
+        "grandTotalLabel": "Portfolio total"
+      }
+    }
+  ],
+  "groups": [
+    {
+      "id": "project-health",
+      "label": "Project Health",
+      "widgetIds": ["milestone-summary"]
+    }
+  ]
+}
+```
+
+---
+
+## Example 5: Timeline and gantt report with tabs
+
+**User request**: "Create a release plan with a milestone timeline tab and a gantt-style delivery schedule tab."
+
+**ReportSpec**:
+
+```json
+{
+  "id": "release-plan",
+  "title": "Release Plan",
+  "layout": "singleColumn",
+  "dataSources": {
+    "roadmap": {
+      "name": "release-roadmap",
+      "query": "releaseRoadmap",
+      "delivery": {
+        "mode": "fullVisual",
+        "maxRows": 500
+      }
+    }
+  },
+  "filters": [
+    {
+      "type": "dateRange",
+      "id": "window",
+      "label": "Timeline Window",
+      "dataSource": "roadmap",
+      "paramKeyFrom": "startFrom",
+      "paramKeyTo": "endTo"
+    }
+  ],
+  "widgets": [
+    {
+      "type": "timelineView",
+      "id": "release-timeline",
+      "title": "Milestone Timeline",
+      "dataSource": "roadmap",
+      "config": {
+        "startDateKey": "startDate",
+        "endDateKey": "endDate",
+        "labelKey": "milestone",
+        "groupKey": "team",
+        "statusKey": "status"
+      }
+    },
+    {
+      "type": "ganttChart",
+      "id": "release-gantt",
+      "title": "Delivery Schedule",
+      "dataSource": "roadmap",
+      "config": {
+        "startDateKey": "startDate",
+        "endDateKey": "endDate",
+        "labelKey": "milestone",
+        "groupKey": "workstream",
+        "statusKey": "status"
+      }
+    }
+  ],
+  "tabs": [
+    { "id": "timeline", "label": "Timeline", "widgetIds": ["release-timeline"] },
+    { "id": "schedule", "label": "Schedule", "widgetIds": ["release-gantt"] }
+  ]
+}
+```
+
+---
+
 ## AI Tool Design Notes (Future)
 
 When implementing AI tools:
 
-1. **describe_schema** – Return available entities, fields, and filter options from `DataProvider.describeSchema()` (to be added).
-2. **create_report_spec** – Map NL to ReportSpec; validate before returning.
-3. **update_report_spec** – Modify layout, filters, or widgets; re-validate.
-4. **explain_report** – Summarize what the spec does (title, filters, widgets).
+1. **Load guidance first** – Agents should read the MCP guide/schema resources before drafting a spec.
+2. **Discover actual support** – Use MCP widget/filter discovery instead of hardcoding an older subset.
+3. **Validate in a repair loop** – Re-run validation until the spec is clean.
+4. **Support modern structures** – NL mapping should cover grouped tables, scoped filters, tabs/sections/groups, presets, and timeline/gantt patterns.

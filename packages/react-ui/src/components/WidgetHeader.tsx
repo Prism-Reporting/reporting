@@ -1,10 +1,15 @@
 import type { ReactNode } from "react";
-import type { ResolvedQueryExecution } from "@reporting/core";
+import type {
+  CardConditionalFormattingRule,
+  ResolvedQueryExecution,
+  TableConditionalFormattingRule,
+} from "@reporting/core";
 import { ResolvedQueryInspector } from "./ResolvedQueryInspector.js";
 
 export interface WidgetHeaderProps {
   title?: string;
   queryInfo?: ResolvedQueryExecution;
+  conditionalFormatting?: Array<TableConditionalFormattingRule | CardConditionalFormattingRule>;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   actions?: ReactNode;
@@ -13,17 +18,26 @@ export interface WidgetHeaderProps {
 export function WidgetHeader({
   title,
   queryInfo,
+  conditionalFormatting,
   collapsed = false,
   onToggleCollapse,
   actions,
 }: WidgetHeaderProps) {
-  if (!title && !queryInfo && !onToggleCollapse && !actions) return null;
+  if (!title && !queryInfo && !conditionalFormatting?.length && !onToggleCollapse && !actions) {
+    return null;
+  }
 
   return (
     <div className="report-widget-header">
       {title ? <h3 className="report-widget-title">{title}</h3> : <div />}
       <div className="report-widget-header-actions">
-        {!collapsed && queryInfo ? <ResolvedQueryInspector queries={[queryInfo]} compact /> : null}
+        {!collapsed && (queryInfo || conditionalFormatting?.length) ? (
+          <ResolvedQueryInspector
+            queries={queryInfo ? [queryInfo] : []}
+            conditionalFormatting={conditionalFormatting}
+            compact
+          />
+        ) : null}
         {actions}
         {onToggleCollapse ? (
           <button

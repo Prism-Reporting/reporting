@@ -41,100 +41,171 @@ export const supportedFilters = [
     type: "select",
     description: "Single-value selection filter with explicit UI options.",
     requiredFields: ["type", "id", "label", "dataSource", "options"],
-    optionalFields: ["paramKey", "required", "defaultValue"],
+    optionalFields: ["groupIds", "paramKey", "required", "defaultValue"],
   },
   {
     type: "multiSelect",
     description: "Multi-value selection filter; value is an array, sent as comma-separated param.",
     requiredFields: ["type", "id", "label", "dataSource", "options"],
-    optionalFields: ["paramKey", "required", "defaultValue"],
+    optionalFields: ["groupIds", "paramKey", "required", "defaultValue"],
   },
   {
     type: "dateRange",
     description: "Date range filter that maps user input to from/to query params.",
     requiredFields: ["type", "id", "label", "dataSource"],
-    optionalFields: ["paramKeyFrom", "paramKeyTo", "required", "defaultValue"],
+    optionalFields: ["groupIds", "paramKeyFrom", "paramKeyTo", "required", "defaultValue"],
   },
   {
     type: "search",
     description: "Free-text search filter mapped to a backend query param.",
     requiredFields: ["type", "id", "label", "dataSource"],
-    optionalFields: ["paramKey", "placeholder", "required", "defaultValue"],
+    optionalFields: ["groupIds", "paramKey", "placeholder", "required", "defaultValue"],
   },
   {
     type: "numericRange",
     description: "Numeric range filter with optional min/max/step; maps to two params (from/to).",
     requiredFields: ["type", "id", "label", "dataSource"],
-    optionalFields: ["min", "max", "step", "paramKeyFrom", "paramKeyTo", "required", "defaultValue"],
+    optionalFields: [
+      "groupIds",
+      "min",
+      "max",
+      "step",
+      "paramKeyFrom",
+      "paramKeyTo",
+      "required",
+      "defaultValue",
+    ],
   },
 ] as const;
 
 export const supportedWidgets = [
   {
     type: "table",
-    description: "Tabular widget for raw rows or grouped summary rows. Provide config.columns for raw tables, or config.summary to derive grouped/object summaries. Optional groupByKey, groupLabelKey, aggregations, sort. Optional drillDown opens URL with row values (urlTemplate placeholders, paramKeys).",
+    description: "Tabular widget for raw rows or grouped summary rows. Provide config.columns for raw tables, or config.summary to derive grouped/object summaries. Optional groupByKey, groupLabelKey, aggregations, groupAggregations, sort, and drillDown. Supports grouped subtotals plus grand-total labeling.",
     requiredFields: ["type", "id", "dataSource", "config.columns or config.summary"],
-    optionalFields: ["title", "config.groupByKey", "config.groupLabelKey", "config.summary", "config.aggregations", "config.sort", "config.drillDown"],
+    optionalFields: [
+      "title",
+      "groupIds",
+      "width",
+      "height",
+      "config.groupByKey",
+      "config.groupLabelKey",
+      "config.summary",
+      "config.aggregations",
+      "config.groupAggregations",
+      "config.groupSummaryLabel",
+      "config.grandTotalLabel",
+      "config.sort",
+      "config.drillDown",
+    ],
   },
   {
     type: "cardView",
     description: "Record-browsing widget rendered as responsive cards. Configure titleKey, optional subtitleKey, badges, metadata rows, and an optional primaryMetric with compact or detailed templates.",
     requiredFields: ["type", "id", "dataSource", "config.titleKey"],
-    optionalFields: ["title", "width", "height", "config.subtitleKey", "config.badges", "config.metadata", "config.primaryMetric", "config.template", "config.emptyStateText"],
+    optionalFields: [
+      "title",
+      "groupIds",
+      "width",
+      "height",
+      "config.subtitleKey",
+      "config.badges",
+      "config.metadata",
+      "config.primaryMetric",
+      "config.template",
+      "config.emptyStateText",
+    ],
   },
   {
     type: "barChart",
     description: "Bar chart widget with category and numeric value fields.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
-    optionalFields: ["title", "config.series"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.series"],
   },
   {
     type: "lineChart",
     description: "Line chart widget with category (x-axis) and value (y-axis); data ordered by category. Optional series for multiple lines.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
-    optionalFields: ["title", "config.series"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.series"],
   },
   {
     type: "areaChart",
     description: "Area chart widget with category (x-axis) and value (y-axis); optional series for multiple filled trends.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
-    optionalFields: ["title", "config.series"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.series"],
+  },
+  {
+    type: "spiralChart",
+    description: "Spiral chart widget with category labels and numeric values, useful for showing ranked magnitude in a more expressive radial layout.",
+    requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
+    optionalFields: ["title", "groupIds", "width", "height"],
   },
   {
     type: "pieChart",
     description: "Pie chart widget with category labels and a numeric value per slice.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
-    optionalFields: ["title", "width", "height"],
+    optionalFields: ["title", "groupIds", "width", "height"],
   },
   {
     type: "doughnutChart",
     description: "Doughnut chart widget with category labels and a numeric value per slice.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
-    optionalFields: ["title", "width", "height"],
+    optionalFields: ["title", "groupIds", "width", "height"],
   },
   {
     type: "kpi",
     description: "Single value widget that reads one field from the first query row or aggregates the full result set. Optional trend shows a sparkline from first N rows.",
     requiredFields: ["type", "id", "dataSource", "config.valueKey"],
-    optionalFields: ["title", "config.label", "config.aggregation", "config.format", "config.currencyCode", "config.decimalPlaces", "config.prefix", "config.suffix", "config.trend"],
+    optionalFields: [
+      "title",
+      "groupIds",
+      "width",
+      "height",
+      "config.label",
+      "config.aggregation",
+      "config.format",
+      "config.currencyCode",
+      "config.decimalPlaces",
+      "config.prefix",
+      "config.suffix",
+      "config.trend",
+    ],
   },
   {
     type: "stackedBarChart",
     description: "Stacked bar chart: categoryKey for x-axis, series array defines one stack segment per value key.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.series"],
-    optionalFields: ["title", "width", "height"],
+    optionalFields: ["title", "groupIds", "width", "height"],
   },
   {
     type: "funnelChart",
     description: "Funnel chart widget with category labels and numeric values for each stage.",
     requiredFields: ["type", "id", "dataSource", "config.categoryKey", "config.valueKey"],
-    optionalFields: ["title", "width", "height"],
+    optionalFields: ["title", "groupIds", "width", "height"],
   },
   {
     type: "scatterChart",
-    description: "Scatter or bubble chart widget with x/y numeric fields and optional zKey for bubble size.",
+    description: "Scatter chart widget with x/y numeric fields and optional zKey for basic size encoding.",
     requiredFields: ["type", "id", "dataSource", "config.xKey", "config.yKey"],
-    optionalFields: ["title", "width", "height", "config.zKey"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.zKey"],
+  },
+  {
+    type: "bubbleChart",
+    description: "Bubble chart widget with x/y position, required zKey sizing, optional labelKey for tooltip labels, and optional seriesKey for grouped colors.",
+    requiredFields: ["type", "id", "dataSource", "config.xKey", "config.yKey", "config.zKey"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.labelKey", "config.seriesKey"],
+  },
+  {
+    type: "timelineView",
+    description: "Timeline widget for dated items. Configure start/end date fields, a label field, and optional group/status keys to cluster milestones or roadmap entries.",
+    requiredFields: ["type", "id", "dataSource", "config.startDateKey", "config.endDateKey", "config.labelKey"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.groupKey", "config.statusKey"],
+  },
+  {
+    type: "ganttChart",
+    description: "Gantt-style scheduling widget that shares the timeline data contract but emphasizes planned ranges and grouped tracks.",
+    requiredFields: ["type", "id", "dataSource", "config.startDateKey", "config.endDateKey", "config.labelKey"],
+    optionalFields: ["title", "groupIds", "width", "height", "config.groupKey", "config.statusKey"],
   },
 ] as const;
 
@@ -150,14 +221,15 @@ ReportSpec is the public DSL for AI-authored reporting in Prism Reporting. Agent
 4. Define \`dataSources\` as an object keyed by data source id.
 5. Every filter and widget \`dataSource\` must reference an existing key in \`dataSources\`.
 6. Use only supported filter types: \`select\`, \`multiSelect\`, \`dateRange\`, \`search\`, \`numericRange\`.
-7. Use only supported widget types: \`table\`, \`cardView\`, \`barChart\`, \`lineChart\`, \`areaChart\`, \`pieChart\`, \`doughnutChart\`, \`stackedBarChart\`, \`funnelChart\`, \`scatterChart\`, \`kpi\`.
+7. Use only supported widget types: \`table\`, \`cardView\`, \`barChart\`, \`lineChart\`, \`areaChart\`, \`spiralChart\`, \`pieChart\`, \`doughnutChart\`, \`stackedBarChart\`, \`funnelChart\`, \`scatterChart\`, \`bubbleChart\`, \`timelineView\`, \`ganttChart\`, \`kpi\`.
 8. **Filter ids must be unique** within \`filters\`; **widget ids must be unique** within \`widgets\`.
 9. **Sections and tabs reference widgets by id**: Every value in \`sections[].widgetIds\` and \`tabs[].widgetIds\` must be exactly one of the \`id\` values from \`spec.widgets\`. Define all widgets in \`widgets\` first (each with a unique \`id\`), then use those same ids in \`sections\` or \`tabs\`; do not reference ids that are not in \`widgets\`.
-10. When query metadata is available, use only published query names and field keys.
-11. Optional \`presets\`: array of \`{ id, label, filterState }\` for saved filter states (e.g. "This quarter", "Last year"). Hosts can show a dropdown or buttons to apply a preset by setting filter state from \`preset.filterState\`.
-12. Optional \`version\`: string (e.g. \`"1.0"\`, \`"2024.03"\`) for report versioning and display (e.g. "Report v1.0").
-13. Optional \`refreshInterval\`: number (seconds). When set, the host should re-call \`resolveReport\` after that interval; the engine does not implement timers.
-14. Optional \`owner\` and \`author\`: strings (e.g. user id or email) for governance and UI display (e.g. "Owner: {owner}", "By {author}"); pass-through only, no validation.
+10. Optional \`groups\` define logical filter scopes. Use \`groups[].widgetIds\` and \`groupIds\` on filters/widgets/sections/tabs when only part of the report should react to a filter.
+11. When query metadata is available, use only published query names and field keys.
+12. Optional \`presets\`: array of \`{ id, label, filterState }\` for saved filter states (e.g. "This quarter", "Last year"). Hosts can show a dropdown or buttons to apply a preset by setting filter state from \`preset.filterState\`.
+13. Optional \`version\`: string (e.g. \`"1.0"\`, \`"2024.03"\`) for report versioning and display (e.g. "Report v1.0").
+14. Optional \`refreshInterval\`: number (seconds). When set, the host should re-call \`resolveReport\` after that interval; the engine does not implement timers.
+15. Optional \`owner\` and \`author\`: strings (e.g. user id or email) for governance and UI display (e.g. "Owner: {owner}", "By {author}"); pass-through only, no validation.
 
 ## Save/load reports
 
@@ -185,16 +257,17 @@ Each filter must have a **unique string \`id\`**, \`type\`, \`label\`, and \`dat
 
 | Type       | Required fields              | Optional fields                                          |
 |-----------|------------------------------|----------------------------------------------------------|
-| \`select\`   | \`type\`, \`id\`, \`label\`, \`dataSource\`, \`options\` | \`paramKey\`, \`required\`, \`defaultValue\`             |
-| \`multiSelect\` | \`type\`, \`id\`, \`label\`, \`dataSource\`, \`options\` | \`paramKey\` (sent as comma-separated), \`required\`, \`defaultValue\` (array) |
-| \`dateRange\`| \`type\`, \`id\`, \`label\`, \`dataSource\`          | \`paramKeyFrom\`, \`paramKeyTo\`, \`required\`, \`defaultValue\` |
-| \`search\`   | \`type\`, \`id\`, \`label\`, \`dataSource\`          | \`paramKey\`, \`placeholder\`, \`required\`, \`defaultValue\` |
-| \`numericRange\` | \`type\`, \`id\`, \`label\`, \`dataSource\`        | \`min\`, \`max\`, \`step\`, \`paramKeyFrom\`, \`paramKeyTo\`, \`required\`, \`defaultValue\` |
+| \`select\`   | \`type\`, \`id\`, \`label\`, \`dataSource\`, \`options\` | \`groupIds\`, \`paramKey\`, \`required\`, \`defaultValue\`             |
+| \`multiSelect\` | \`type\`, \`id\`, \`label\`, \`dataSource\`, \`options\` | \`groupIds\`, \`paramKey\` (sent as comma-separated), \`required\`, \`defaultValue\` (array) |
+| \`dateRange\`| \`type\`, \`id\`, \`label\`, \`dataSource\`          | \`groupIds\`, \`paramKeyFrom\`, \`paramKeyTo\`, \`required\`, \`defaultValue\` |
+| \`search\`   | \`type\`, \`id\`, \`label\`, \`dataSource\`          | \`groupIds\`, \`paramKey\`, \`placeholder\`, \`required\`, \`defaultValue\` |
+| \`numericRange\` | \`type\`, \`id\`, \`label\`, \`dataSource\`        | \`groupIds\`, \`min\`, \`max\`, \`step\`, \`paramKeyFrom\`, \`paramKeyTo\`, \`required\`, \`defaultValue\` |
 
 - **select** / **multiSelect**: \`options\` must be a **non-empty** array of \`{ value, label }\` objects. Do not use an empty \`options\` array.
 - **dateRange**: maps user input to from/to query params.
 - **search**: free-text search; \`placeholder\` is UI hint.
 - **numericRange**: numeric from/to; optional \`min\`, \`max\`, \`step\`.
+- **groupIds**: optional array of logical group ids. Omit it for global filters; set it when only specific widgets, sections, or tabs should respond.
 
 ## Widgets
 
@@ -202,26 +275,32 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 
 | Type        | Required fields                           | Optional fields                                      |
 |------------|-------------------------------------------|------------------------------------------------------|
-| \`table\`    | \`type\`, \`id\`, \`dataSource\`, \`config.columns\` or \`config.summary\` | \`title\`, \`width\`, \`height\`, \`config.groupByKey\`, \`config.groupLabelKey\`, \`config.summary\`, \`config.aggregations\`, \`config.sort\`, \`config.drillDown\` |
-| \`cardView\` | \`type\`, \`id\`, \`dataSource\`, \`config.titleKey\` | \`title\`, \`width\`, \`height\`, \`config.subtitleKey\`, \`config.badges\`, \`config.metadata\`, \`config.primaryMetric\`, \`config.template\`, \`config.emptyStateText\` |
-| \`barChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\`                          |
-| \`stackedBarChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.series\` | \`title\`, \`width\`, \`height\` |
-| \`lineChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\` (multiple lines)       |
-| \`areaChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\`, \`config.series\` (multiple filled areas) |
-| \`pieChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
-| \`doughnutChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
-| \`funnelChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`width\`, \`height\` |
-| \`scatterChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.xKey\`, \`config.yKey\` | \`title\`, \`width\`, \`height\`, \`config.zKey\` |
-| \`kpi\`      | \`type\`, \`id\`, \`dataSource\`, \`config.valueKey\`  | \`title\`, \`width\`, \`height\`, \`config.label\`, \`config.aggregation\`, \`config.format\`, \`config.currencyCode\`, \`config.decimalPlaces\`, \`config.prefix\`, \`config.suffix\`, \`config.trend\` |
+| \`table\`    | \`type\`, \`id\`, \`dataSource\`, \`config.columns\` or \`config.summary\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.groupByKey\`, \`config.groupLabelKey\`, \`config.summary\`, \`config.aggregations\`, \`config.groupAggregations\`, \`config.groupSummaryLabel\`, \`config.grandTotalLabel\`, \`config.sort\`, \`config.drillDown\` |
+| \`cardView\` | \`type\`, \`id\`, \`dataSource\`, \`config.titleKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.subtitleKey\`, \`config.badges\`, \`config.metadata\`, \`config.primaryMetric\`, \`config.template\`, \`config.emptyStateText\` |
+| \`barChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.series\`                          |
+| \`stackedBarChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.series\` | \`title\`, \`groupIds\`, \`width\`, \`height\` |
+| \`lineChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.series\` (multiple lines)       |
+| \`areaChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.series\` (multiple filled areas) |
+| \`spiralChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\` |
+| \`pieChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\` |
+| \`doughnutChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\` |
+| \`funnelChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\` |
+| \`scatterChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.xKey\`, \`config.yKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.zKey\` |
+| \`bubbleChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.xKey\`, \`config.yKey\`, \`config.zKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.labelKey\`, \`config.seriesKey\` |
+| \`timelineView\` | \`type\`, \`id\`, \`dataSource\`, \`config.startDateKey\`, \`config.endDateKey\`, \`config.labelKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.groupKey\`, \`config.statusKey\` |
+| \`ganttChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.startDateKey\`, \`config.endDateKey\`, \`config.labelKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.groupKey\`, \`config.statusKey\` |
+| \`kpi\`      | \`type\`, \`id\`, \`dataSource\`, \`config.valueKey\`  | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.label\`, \`config.aggregation\`, \`config.format\`, \`config.currencyCode\`, \`config.decimalPlaces\`, \`config.prefix\`, \`config.suffix\`, \`config.trend\` |
 
-- **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`) for raw row tables. \`config.summary\` is an optional array of \`{ key, op }\` where \`op\` is one of \`sum | avg | min | max | count | latest | earliest | distinct\`; when present, the engine derives one summary row across the whole dataset or one summary row per \`groupByKey\`. If \`config.columns\` is omitted in summary mode, columns are derived automatically. Use \`groupByKey\` to group raw rows or to build grouped summary rows; \`groupLabelKey\` sets the section/header label or alternate group field. \`config.aggregations\` is an optional array of \`{ key, op }\`; footer row shows aggregated values. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default). Summary tables should use full-result delivery rather than paginatedList so reducers see the complete filtered dataset.
+- **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`) for raw row tables. \`config.summary\` is an optional array of \`{ key, op }\` where \`op\` is one of \`sum | avg | min | max | count | latest | earliest | distinct\`; when present, the engine derives one summary row across the whole dataset or one summary row per \`groupByKey\`. If \`config.columns\` is omitted in summary mode, columns are derived automatically. Use \`groupByKey\` to group raw rows or to build grouped summary rows; \`groupLabelKey\` sets the section/header label or alternate group field. \`config.aggregations\` adds a grand-total footer row. \`config.groupAggregations\` adds per-group subtotal rows and requires \`groupByKey\`. Optional \`groupSummaryLabel\` and \`grandTotalLabel\` customize those row labels. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default). Summary tables and grouped subtotal tables should use full-result delivery rather than paginatedList so reducers see the complete filtered dataset.
 - **cardView**: renders each row as a card. \`config.titleKey\` is required. Optional \`subtitleKey\`, \`badges\`, and \`metadata\` are arrays of \`{ key, label? }\` bound to row fields. Optional \`primaryMetric\` is \`{ key, label?, format?, currencyCode?, decimalPlaces?, prefix?, suffix? }\` and uses the same formatting options as KPIs. Optional \`template\` is \`"compact"\` or \`"detailed"\`; omit to use \`"detailed"\`. Optional \`emptyStateText\` customizes the no-results message. \`cardView\` can use paginatedList delivery for record browsing or fullVisual for full result grids.
 - **barChart**: \`categoryKey\` and \`valueKey\` are field keys from the query result.
 - **stackedBarChart**: \`config.categoryKey\` for x-axis; \`config.series\` is an array of \`{ key, label? }\` (one stack segment per series key).
 - **lineChart**: \`categoryKey\` (x-axis) and \`valueKey\` (y-axis); data is ordered by category. Optional \`config.series\` for multiple lines (\`{ key, label }\` per series).
 - **areaChart**: same data contract as \`lineChart\`, but rendered as filled trend areas. Optional \`config.series\` for multiple areas.
-- **pieChart** / **doughnutChart** / **funnelChart**: use \`categoryKey\` and \`valueKey\`.
-- **scatterChart**: use \`xKey\` and \`yKey\`; optional \`zKey\` enables bubble-size rendering.
+- **spiralChart** / **pieChart** / **doughnutChart** / **funnelChart**: use \`categoryKey\` and \`valueKey\`.
+- **scatterChart**: use \`xKey\` and \`yKey\`; optional \`zKey\` enables basic size encoding.
+- **bubbleChart**: use \`xKey\`, \`yKey\`, and required \`zKey\`; optional \`labelKey\` improves tooltip labels and optional \`seriesKey\` groups bubbles by color.
+- **timelineView** / **ganttChart**: use \`startDateKey\`, \`endDateKey\`, and \`labelKey\` for dated ranges. Optional \`groupKey\` clusters items into lanes/groups and optional \`statusKey\` surfaces per-item status styling.
 - **kpi**: displays one value from the first row by default. Optional \`config.aggregation\`: \`{ key, op }\` with \`op\` in \`sum | avg | min | max | count\` aggregates the full result set before rendering. \`format\` (\`number\`, \`currency\`, \`percent\`, \`plain\`) supports optional \`currencyCode\`, \`decimalPlaces\`, \`prefix\`, and \`suffix\`. Optional \`config.trend\`: \`{ dataKey: string }\`; when set, a sparkline is shown from the first N rows using that dataKey (omitted if no rows).
 
 ## Presets (optional)
@@ -233,6 +312,16 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 - \`filterState\`: object keyed by filter id with values matching filter types (string, \`{ from, to }\`, string[] for multiSelect)
 
 The host application reads \`spec.presets\` and can render a dropdown or buttons; when the user selects a preset, set the report filter state to \`preset.filterState\` (or merge with defaults via \`getEffectiveFilterState\`).
+
+## Groups (optional)
+
+\`groups\` is an optional array of logical filter scopes. Each group has:
+
+- \`id\`: unique string used by filters/widgets/sections/tabs in \`groupIds\`
+- \`label\`: optional display label for host UIs
+- \`widgetIds\`: array of widget ids that belong to the scope
+
+Use groups when only part of a report should respond to a filter. Section ids and tab ids also act as implicit group ids, so a filter can target a whole section or tab by reusing that id in \`groupIds\`.
 
 ## Version and refresh
 
@@ -255,6 +344,7 @@ Hosts can supply an \`onAudit\` callback to \`resolveReport(spec, dataProvider, 
 - \`id\`: unique string
 - \`title\`: optional display title for the section header
 - \`widgetIds\`: array of widget ids in display order; **each value must be exactly the \`id\` of an entry in \`spec.widgets\`** (no extra or invented ids).
+- \`groupIds\`: optional array of logical group ids inherited by every widget in the section
 
 If \`sections\` is present, the UI renders section headers and then widgets per section. **Widgets not listed in any section** are placed in an "Other" section at the end. If \`sections\` is absent, all widgets are rendered in \`widgets\` array order using the report \`layout\`.
 
@@ -283,6 +373,7 @@ These are applied as inline styles (or equivalent) on the widget wrapper. Contra
 - \`id\`: unique string
 - \`label\`: display label for the tab
 - \`widgetIds\`: array of widget ids to show in that tab; **each value must be exactly the \`id\` of an entry in \`spec.widgets\`** (no extra or invented ids).
+- \`groupIds\`: optional array of logical group ids inherited by every widget in the tab
 
 When \`tabs\` is present, **tabs take precedence over sections**: \`sections\` is ignored and the report is rendered as a tab bar with one panel per tab. Each tab panel shows only its listed widgets (in \`widgetIds\` order) using the report \`layout\`. **Widgets not listed in any tab** are placed in an "Other" tab. If \`tabs\` is absent, \`sections\` (if present) or flat \`widgets\` order is used.
 
@@ -401,6 +492,7 @@ const reportSpecJsonSchema = {
           id: { type: "string" },
           title: { type: "string" },
           widgetIds: { type: "array", items: { type: "string" } },
+          groupIds: { type: "array", items: { type: "string" } },
         },
       },
     },
@@ -411,6 +503,21 @@ const reportSpecJsonSchema = {
         type: "object",
         additionalProperties: false,
         required: ["id", "label", "widgetIds"],
+        properties: {
+          id: { type: "string" },
+          label: { type: "string" },
+          widgetIds: { type: "array", items: { type: "string" } },
+          groupIds: { type: "array", items: { type: "string" } },
+        },
+      },
+    },
+    groups: {
+      type: "array",
+      description: "Optional logical groups used to scope filters to subsets of widgets.",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "widgetIds"],
         properties: {
           id: { type: "string" },
           label: { type: "string" },
@@ -500,6 +607,7 @@ const reportSpecJsonSchema = {
                   { type: "array", items: { type: "string" }, minItems: 1 },
                 ],
               },
+              groupIds: { type: "array", items: { type: "string" } },
               paramKey: { type: "string" },
               options: {
                 type: "array",
@@ -531,6 +639,7 @@ const reportSpecJsonSchema = {
                   { type: "array", items: { type: "string" }, minItems: 1 },
                 ],
               },
+              groupIds: { type: "array", items: { type: "string" } },
               paramKey: { type: "string" },
               options: {
                 type: "array",
@@ -565,6 +674,7 @@ const reportSpecJsonSchema = {
                   { type: "array", items: { type: "string" }, minItems: 1 },
                 ],
               },
+              groupIds: { type: "array", items: { type: "string" } },
               paramKeyFrom: { type: "string" },
               paramKeyTo: { type: "string" },
               required: { type: "boolean" },
@@ -588,6 +698,7 @@ const reportSpecJsonSchema = {
                   { type: "array", items: { type: "string" }, minItems: 1 },
                 ],
               },
+              groupIds: { type: "array", items: { type: "string" } },
               paramKey: { type: "string" },
               placeholder: { type: "string" },
               required: { type: "boolean" },
@@ -608,6 +719,7 @@ const reportSpecJsonSchema = {
                   { type: "array", items: { type: "string" }, minItems: 1 },
                 ],
               },
+              groupIds: { type: "array", items: { type: "string" } },
               min: { type: "number" },
               max: { type: "number" },
               step: { type: "number" },
@@ -671,6 +783,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps tables to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps tables to at least 180px tall." },
               config: {
@@ -734,6 +847,30 @@ const reportSpecJsonSchema = {
                       },
                     },
                   },
+                  groupAggregations: {
+                    type: "array",
+                    description: "Optional grouped subtotal aggregations. Requires groupByKey.",
+                    items: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["key", "op"],
+                      properties: {
+                        key: { type: "string" },
+                        op: {
+                          type: "string",
+                          enum: ["sum", "avg", "min", "max", "count"],
+                        },
+                      },
+                    },
+                  },
+                  groupSummaryLabel: {
+                    type: "string",
+                    description: "Optional label for grouped subtotal rows. Defaults to 'Subtotal'.",
+                  },
+                  grandTotalLabel: {
+                    type: "string",
+                    description: "Optional label for the grand total footer row. Defaults to 'Grand total'.",
+                  },
                   sort: {
                     description: "Widget-level sort; applied after dataSource sort.",
                     oneOf: [
@@ -792,6 +929,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps card views to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps card views to at least 220px tall." },
               config: {
@@ -866,6 +1004,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -901,6 +1040,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -932,10 +1072,34 @@ const reportSpecJsonSchema = {
             additionalProperties: false,
             required: ["type", "id", "dataSource", "config"],
             properties: {
+              type: { const: "spiralChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["categoryKey", "valueKey"],
+                properties: {
+                  categoryKey: { type: "string" },
+                  valueKey: { type: "string" },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
               type: { const: "pieChart" },
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -958,6 +1122,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -980,6 +1145,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -1014,6 +1180,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps KPI widgets to at least 180px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps KPI widgets to at least 80px tall." },
               config: {
@@ -1066,6 +1233,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -1101,6 +1269,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -1123,6 +1292,7 @@ const reportSpecJsonSchema = {
               id: { type: "string" },
               title: { type: "string" },
               dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
               width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
               height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
               config: {
@@ -1133,6 +1303,84 @@ const reportSpecJsonSchema = {
                   xKey: { type: "string" },
                   yKey: { type: "string" },
                   zKey: { type: "string" },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "bubbleChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps charts to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps charts to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["xKey", "yKey", "zKey"],
+                properties: {
+                  xKey: { type: "string" },
+                  yKey: { type: "string" },
+                  zKey: { type: "string" },
+                  labelKey: { type: "string" },
+                  seriesKey: { type: "string" },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "timelineView" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps timeline widgets to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps timeline widgets to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["startDateKey", "endDateKey", "labelKey"],
+                properties: {
+                  startDateKey: { type: "string" },
+                  endDateKey: { type: "string" },
+                  labelKey: { type: "string" },
+                  groupKey: { type: "string" },
+                  statusKey: { type: "string" },
+                },
+              },
+            },
+          },
+          {
+            type: "object",
+            additionalProperties: false,
+            required: ["type", "id", "dataSource", "config"],
+            properties: {
+              type: { const: "ganttChart" },
+              id: { type: "string" },
+              title: { type: "string" },
+              dataSource: { type: "string" },
+              groupIds: { type: "array", items: { type: "string" } },
+              width: { type: "string", description: "Optional sizing hint (e.g. 100%, 400px). Renderer clamps gantt widgets to at least 320px wide." },
+              height: { type: "string", description: "Optional sizing hint. Renderer clamps gantt widgets to at least 260px tall." },
+              config: {
+                type: "object",
+                additionalProperties: false,
+                required: ["startDateKey", "endDateKey", "labelKey"],
+                properties: {
+                  startDateKey: { type: "string" },
+                  endDateKey: { type: "string" },
+                  labelKey: { type: "string" },
+                  groupKey: { type: "string" },
+                  statusKey: { type: "string" },
                 },
               },
             },
@@ -1320,6 +1568,106 @@ const exampleMultiSource = {
   ],
 };
 
+const exampleGroupedTable = {
+  id: "project-milestones",
+  title: "Project Milestones",
+  layout: "twoColumn",
+  layoutOptions: {
+    columnGap: "1.25rem",
+    rowGap: "1rem",
+  },
+  dataSources: {
+    milestones: {
+      name: "project-milestones",
+      query: "projectMilestones",
+      delivery: {
+        mode: "fullVisual",
+        maxRows: 1000,
+      },
+    },
+  },
+  filters: [
+    {
+      type: "multiSelect",
+      id: "projectStatus",
+      label: "Project Status",
+      dataSource: "milestones",
+      groupIds: ["project-health"],
+      paramKey: "projectStatus",
+      options: [
+        { value: "on-track", label: "On Track" },
+        { value: "at-risk", label: "At Risk" },
+        { value: "off-track", label: "Off Track" },
+      ],
+    },
+    {
+      type: "numericRange",
+      id: "budgetVariance",
+      label: "Budget Variance",
+      dataSource: "milestones",
+      groupIds: ["project-health"],
+      min: -100000,
+      max: 100000,
+      step: 5000,
+      paramKeyFrom: "budgetVarianceMin",
+      paramKeyTo: "budgetVarianceMax",
+    },
+  ],
+  widgets: [
+    {
+      type: "table",
+      id: "milestone-summary",
+      title: "Milestones by Project",
+      dataSource: "milestones",
+      groupIds: ["project-health"],
+      width: "100%",
+      config: {
+        groupByKey: "projectId",
+        groupLabelKey: "projectName",
+        columns: [
+          { key: "milestoneName", label: "Milestone" },
+          { key: "owner", label: "Owner" },
+          { key: "plannedDate", label: "Planned", type: "date" },
+          { key: "forecastDate", label: "Forecast", type: "date" },
+          { key: "budgetVariance", label: "Variance", type: "number" },
+        ],
+        groupAggregations: [{ key: "budgetVariance", op: "sum" }],
+        groupSummaryLabel: "Project subtotal",
+        aggregations: [{ key: "budgetVariance", op: "sum" }],
+        grandTotalLabel: "Portfolio total",
+        sort: [
+          { key: "projectName", direction: "asc" },
+          { key: "plannedDate", direction: "asc" },
+        ],
+      },
+    },
+  ],
+  groups: [
+    {
+      id: "project-health",
+      label: "Project Health",
+      widgetIds: ["milestone-summary"],
+    },
+  ],
+  sections: [
+    {
+      id: "portfolio-section",
+      title: "Portfolio Health",
+      widgetIds: ["milestone-summary"],
+      groupIds: ["project-health"],
+    },
+  ],
+  presets: [
+    {
+      id: "at-risk-only",
+      label: "At Risk Only",
+      filterState: {
+        projectStatus: ["at-risk", "off-track"],
+      },
+    },
+  ],
+};
+
 /** Example with select, dateRange, and search filters and table + barChart widgets. */
 const exampleMixedFiltersWidgets = {
   id: "tasks-dashboard",
@@ -1384,6 +1732,72 @@ const exampleMixedFiltersWidgets = {
         categoryKey: "status",
         valueKey: "count",
       },
+    },
+  ],
+};
+
+const exampleTimeline = {
+  id: "release-plan",
+  title: "Release Plan",
+  layout: "singleColumn",
+  dataSources: {
+    roadmap: {
+      name: "release-roadmap",
+      query: "releaseRoadmap",
+      delivery: {
+        mode: "fullVisual",
+        maxRows: 500,
+      },
+    },
+  },
+  filters: [
+    {
+      type: "dateRange",
+      id: "window",
+      label: "Timeline Window",
+      dataSource: "roadmap",
+      paramKeyFrom: "startFrom",
+      paramKeyTo: "endTo",
+    },
+  ],
+  widgets: [
+    {
+      type: "timelineView",
+      id: "release-timeline",
+      title: "Milestone Timeline",
+      dataSource: "roadmap",
+      config: {
+        startDateKey: "startDate",
+        endDateKey: "endDate",
+        labelKey: "milestone",
+        groupKey: "team",
+        statusKey: "status",
+      },
+    },
+    {
+      type: "ganttChart",
+      id: "release-gantt",
+      title: "Delivery Schedule",
+      dataSource: "roadmap",
+      config: {
+        startDateKey: "startDate",
+        endDateKey: "endDate",
+        labelKey: "milestone",
+        groupKey: "workstream",
+        statusKey: "status",
+      },
+    },
+  ],
+  tabs: [
+    {
+      id: "timeline",
+      label: "Timeline",
+      widgetIds: ["release-timeline"],
+    },
+    {
+      id: "schedule",
+      label: "Schedule",
+      widgetIds: ["release-gantt"],
     },
   ],
 };
@@ -1649,12 +2063,29 @@ export function getStaticContractResources(): ContractResource[] {
       text: JSON.stringify(exampleMultiSource, null, 2),
     },
     {
+      name: "report-spec-example-grouped-table",
+      uri: `report-spec://${REPORT_SPEC_VERSION}/examples/patterns/grouped-table`,
+      title: "Grouped Table ReportSpec Example",
+      description:
+        "Example using grouped table subtotals, scoped filters, groups, sections, layout options, and presets.",
+      mimeType: "application/json",
+      text: JSON.stringify(exampleGroupedTable, null, 2),
+    },
+    {
       name: "report-spec-example-mixed-filters-widgets",
       uri: `report-spec://${REPORT_SPEC_VERSION}/examples/patterns/mixed-filters-widgets`,
       title: "Mixed Filters and Widgets ReportSpec Example",
       description: "Example with select, dateRange, and search filters and table + barChart widgets.",
       mimeType: "application/json",
       text: JSON.stringify(exampleMixedFiltersWidgets, null, 2),
+    },
+    {
+      name: "report-spec-example-timeline",
+      uri: `report-spec://${REPORT_SPEC_VERSION}/examples/patterns/timeline`,
+      title: "Timeline and Gantt ReportSpec Example",
+      description: "Example using timelineView and ganttChart widgets with tabs.",
+      mimeType: "application/json",
+      text: JSON.stringify(exampleTimeline, null, 2),
     },
     {
       name: "report-spec-changelog",
@@ -1726,8 +2157,12 @@ export function getExampleByPattern(pattern: string) {
       return exampleKpi;
     case "multiSource":
       return exampleMultiSource;
+    case "groupedTable":
+      return exampleGroupedTable;
     case "mixedFiltersWidgets":
       return exampleMixedFiltersWidgets;
+    case "timeline":
+      return exampleTimeline;
     default:
       return null;
   }

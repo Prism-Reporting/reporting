@@ -58,6 +58,63 @@ function createBarChartSpec(height = '260px') {
   };
 }
 
+function createSpiralChartSpec() {
+  return {
+    id: 'projects-spiral',
+    title: 'Projects Spiral',
+    layout: 'singleColumn',
+    dataSources: {
+      projects: {
+        name: 'projects',
+        query: 'projects',
+      },
+    },
+    filters: [],
+    widgets: [
+      {
+        type: 'spiralChart',
+        id: 'projects-spiral',
+        title: 'Projects by intensity',
+        dataSource: 'projects',
+        config: {
+          categoryKey: 'name',
+          valueKey: 'score',
+        },
+      },
+    ],
+  };
+}
+
+function createBubbleChartSpec() {
+  return {
+    id: 'projects-bubble',
+    title: 'Projects Bubble',
+    layout: 'singleColumn',
+    dataSources: {
+      projects: {
+        name: 'projects',
+        query: 'projects',
+      },
+    },
+    filters: [],
+    widgets: [
+      {
+        type: 'bubbleChart',
+        id: 'projects-bubble',
+        title: 'Projects by health',
+        dataSource: 'projects',
+        config: {
+          xKey: 'budgetVariance',
+          yKey: 'scheduleVariance',
+          zKey: 'teamSize',
+          labelKey: 'name',
+          seriesKey: 'portfolio',
+        },
+      },
+    ],
+  };
+}
+
 describe('kpi validation parity', () => {
   it('accepts KPI aggregation config when the source field exists', () => {
     const validation = validateReportSpec(
@@ -174,6 +231,40 @@ describe('kpi validation parity', () => {
     assert.match(validation.errors.join('\n'), /smaller than the minimum 260px/);
   });
 
+  it('accepts spiral charts when referenced fields exist', () => {
+    const validation = validateReportSpec(createSpiralChartSpec(), {
+      availableQueries: ['projects'],
+      availableFields: {
+        projects: ['name', 'score'],
+      },
+    });
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('accepts bubble charts when the referenced fields exist', () => {
+    const validation = validateReportSpec(createBubbleChartSpec(), {
+      availableQueries: ['projects'],
+      availableFields: {
+        projects: ['name', 'portfolio', 'budgetVariance', 'scheduleVariance', 'teamSize'],
+      },
+    });
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('rejects bubble charts when zKey is missing from the query contract', () => {
+    const validation = validateReportSpec(createBubbleChartSpec(), {
+      availableQueries: ['projects'],
+      availableFields: {
+        projects: ['name', 'portfolio', 'budgetVariance', 'scheduleVariance'],
+      },
+    });
+
+    assert.equal(validation.valid, false);
+    assert.match(validation.errors.join('\n'), /teamSize/);
+  });
+
   it('resolves "_count" to the row count at runtime', async () => {
     const resolved = await resolveReport(createKpiSpec('_count'), {
       async runQuery() {
@@ -246,6 +337,75 @@ describe('kpi validation parity', () => {
       decimalPlaces: 0,
       prefix: '~',
       suffix: ' total',
+    });
+  });
+
+  it('resolves spiral chart data with category and value keys', async () => {
+    const resolved = await resolveReport(createSpiralChartSpec(), {
+      async runQuery() {
+        return [
+          { name: 'Atlas', score: 84 },
+          { name: 'Orion', score: 61 },
+        ];
+      },
+    });
+
+    assert.equal(resolved.widgets[0].data.type, 'spiralChart');
+    assert.deepEqual(resolved.widgets[0].data.data, {
+      categoryKey: 'name',
+      valueKey: 'score',
+      data: [
+        { name: 'Atlas', score: 84 },
+        { name: 'Orion', score: 61 },
+      ],
+    });
+  });
+
+  it('resolves bubble chart data with the expected key mapping', async () => {
+    const resolved = await resolveReport(createBubbleChartSpec(), {
+      async runQuery() {
+        return [
+          {
+            name: 'Atlas',
+            portfolio: 'Core Systems',
+            budgetVariance: 4,
+            scheduleVariance: 2,
+            teamSize: 10,
+          },
+          {
+            name: 'Orion',
+            portfolio: 'Customer Growth',
+            budgetVariance: -1,
+            scheduleVariance: 5,
+            teamSize: 18,
+          },
+        ];
+      },
+    });
+
+    assert.equal(resolved.widgets[0].data.type, 'bubbleChart');
+    assert.deepEqual(resolved.widgets[0].data.data, {
+      xKey: 'budgetVariance',
+      yKey: 'scheduleVariance',
+      zKey: 'teamSize',
+      labelKey: 'name',
+      seriesKey: 'portfolio',
+      data: [
+        {
+          name: 'Atlas',
+          portfolio: 'Core Systems',
+          budgetVariance: 4,
+          scheduleVariance: 2,
+          teamSize: 10,
+        },
+        {
+          name: 'Orion',
+          portfolio: 'Customer Growth',
+          budgetVariance: -1,
+          scheduleVariance: 5,
+          teamSize: 18,
+        },
+      ],
     });
   });
 
@@ -326,6 +486,202 @@ describe('kpi validation parity', () => {
 
     assert.equal(validation.valid, false);
     assert.match(validation.errors.join('\n'), /paginatedList/);
+  });
+
+  it('accepts grouped raw tables with groupAggregations when referenced fields exist', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'budget-subtotals',
+        title: 'Budget Subtotals',
+        layout: 'singleColumn',
+        dataSources: {
+          initiatives: {
+            name: 'initiatives',
+            query: 'initiatives',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'initiative-budget-table',
+            dataSource: 'initiatives',
+            config: {
+              groupByKey: 'project',
+              columns: [
+                { key: 'owner', label: 'Owner' },
+                { key: 'budget', label: 'Budget' },
+              ],
+              groupAggregations: [{ key: 'budget', op: 'sum' }],
+              aggregations: [{ key: 'budget', op: 'sum' }],
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['initiatives'],
+        availableFields: {
+          initiatives: ['project', 'owner', 'budget'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('accepts valid table and card conditional formatting rules', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'conditional-formatting-valid',
+        title: 'Conditional Formatting',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'projects-table',
+            dataSource: 'projects',
+            config: {
+              columns: [
+                { key: 'name', label: 'Project' },
+                { key: 'budget', label: 'Budget' },
+                { key: 'status', label: 'Status' },
+              ],
+              conditionalFormatting: [
+                {
+                  target: { type: 'row' },
+                  when: { field: 'status', op: 'eq', value: 'At Risk' },
+                  tone: 'danger',
+                },
+                {
+                  target: { type: 'cell', columnKey: 'budget' },
+                  when: { field: 'budget', op: 'between', min: 100, max: 200 },
+                  tone: 'warning',
+                },
+              ],
+            },
+          },
+          {
+            type: 'cardView',
+            id: 'projects-cards',
+            dataSource: 'projects',
+            config: {
+              titleKey: 'name',
+              conditionalFormatting: [
+                {
+                  target: { type: 'card' },
+                  when: { field: 'status', op: 'in', values: ['At Risk', 'Blocked'] },
+                  tone: 'danger',
+                },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projects'],
+        availableFields: {
+          projects: ['name', 'budget', 'status'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('rejects invalid conditional formatting rules', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'conditional-formatting-invalid',
+        title: 'Conditional Formatting',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'projects-table',
+            dataSource: 'projects',
+            config: {
+              columns: [
+                { key: 'name', label: 'Project' },
+                { key: 'budget', label: 'Budget' },
+              ],
+              conditionalFormatting: [
+                {
+                  target: { type: 'cell', columnKey: 'spend' },
+                  when: { field: 'budgetAmount', op: 'between', min: 100 },
+                  tone: 'loud',
+                },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['projects'],
+        availableFields: {
+          projects: ['name', 'budget'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, false);
+    assert.match(validation.errors.join('\n'), /budgetAmount/);
+    assert.match(validation.errors.join('\n'), /columnKey "spend"/);
+    assert.match(validation.errors.join('\n'), /tone must be one of/);
+    assert.match(validation.errors.join('\n'), /requires a string or number max/);
+  });
+
+  it('rejects groupAggregations when groupByKey is missing', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'budget-subtotals-invalid',
+        title: 'Budget Subtotals',
+        layout: 'singleColumn',
+        dataSources: {
+          initiatives: {
+            name: 'initiatives',
+            query: 'initiatives',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'initiative-budget-table',
+            dataSource: 'initiatives',
+            config: {
+              columns: [
+                { key: 'owner', label: 'Owner' },
+                { key: 'budget', label: 'Budget' },
+              ],
+              groupAggregations: [{ key: 'budget', op: 'sum' }],
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['initiatives'],
+        availableFields: {
+          initiatives: ['owner', 'budget'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, false);
+    assert.match(validation.errors.join('\n'), /groupByKey/);
   });
 
   it('resolves grouped summary rows with derived columns and date-aware latest reducers', async () => {
@@ -412,6 +768,72 @@ describe('kpi validation parity', () => {
       },
     ]);
     assert.equal(resolved.widgets[0].data.data.groups, undefined);
+  });
+
+  it('resolves grouped raw rows with subtotal rows and grand total labels', async () => {
+    const resolved = await resolveReport(
+      {
+        id: 'initiative-budget-runtime',
+        title: 'Initiative Budget Runtime',
+        layout: 'singleColumn',
+        dataSources: {
+          initiatives: {
+            name: 'initiatives',
+            query: 'initiatives',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'initiative-budget-table',
+            title: 'Initiatives',
+            dataSource: 'initiatives',
+            config: {
+              groupByKey: 'project',
+              groupLabelKey: 'projectLabel',
+              columns: [
+                { key: 'owner', label: 'Owner' },
+                { key: 'budget', label: 'Budget' },
+                { key: 'spent', label: 'Spent' },
+              ],
+              groupAggregations: [
+                { key: 'budget', op: 'sum' },
+                { key: 'spent', op: 'sum' },
+              ],
+              groupSummaryLabel: 'Project subtotal',
+              aggregations: [
+                { key: 'budget', op: 'sum' },
+                { key: 'spent', op: 'sum' },
+              ],
+              grandTotalLabel: 'Grand total budget',
+            },
+          },
+        ],
+      },
+      {
+        async runQuery() {
+          return [
+            { project: 'atlas', projectLabel: 'Atlas Program', owner: 'Alice', budget: 120, spent: 80 },
+            { project: 'atlas', projectLabel: 'Atlas Program', owner: 'Bob', budget: 90, spent: 60 },
+            { project: 'orion', projectLabel: 'Orion Revamp', owner: 'Carol', budget: 140, spent: 92 },
+          ];
+        },
+      }
+    );
+
+    assert.equal(resolved.widgets[0].data.type, 'table');
+    assert.equal(resolved.widgets[0].data.data.groupSummaryLabel, 'Project subtotal');
+    assert.equal(resolved.widgets[0].data.data.footerLabel, 'Grand total budget');
+    assert.equal(resolved.widgets[0].data.data.groups.length, 2);
+    assert.deepEqual(resolved.widgets[0].data.data.groups[0].summaryRow, {
+      budget: 210,
+      spent: 140,
+    });
+    assert.deepEqual(resolved.widgets[0].data.data.footer, {
+      budget: 350,
+      spent: 232,
+    });
   });
 
   it('accepts card views on paginated data sources and validates referenced fields', () => {
@@ -546,6 +968,99 @@ describe('kpi validation parity', () => {
       },
       template: 'detailed',
     });
+  });
+
+  it('passes conditional formatting through resolved table and card data', async () => {
+    const resolved = await resolveReport(
+      {
+        id: 'conditional-formatting-runtime',
+        title: 'Conditional Formatting Runtime',
+        layout: 'singleColumn',
+        dataSources: {
+          projects: {
+            name: 'projects',
+            query: 'projects',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'table',
+            id: 'projects-table',
+            dataSource: 'projects',
+            config: {
+              columns: [
+                { key: 'name', label: 'Project' },
+                { key: 'budget', label: 'Budget' },
+                { key: 'status', label: 'Status' },
+              ],
+              conditionalFormatting: [
+                {
+                  target: { type: 'row' },
+                  when: { field: 'status', op: 'eq', value: 'At Risk' },
+                  tone: 'danger',
+                  label: 'Escalation',
+                },
+                {
+                  target: { type: 'cell', columnKey: 'budget' },
+                  when: { field: 'budget', op: 'gt', value: 100 },
+                  tone: 'warning',
+                },
+              ],
+            },
+          },
+          {
+            type: 'cardView',
+            id: 'projects-cards',
+            dataSource: 'projects',
+            config: {
+              titleKey: 'name',
+              conditionalFormatting: [
+                {
+                  target: { type: 'card' },
+                  when: { field: 'status', op: 'in', values: ['At Risk'] },
+                  tone: 'danger',
+                  label: 'At-risk card',
+                },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        async runQuery() {
+          return [
+            { name: 'Atlas', budget: 120, status: 'At Risk' },
+            { name: 'Orion', budget: 80, status: 'On Track' },
+          ];
+        },
+      }
+    );
+
+    assert.equal(resolved.widgets[0].data.type, 'table');
+    assert.deepEqual(resolved.widgets[0].data.data.conditionalFormatting, [
+      {
+        target: { type: 'row' },
+        when: { field: 'status', op: 'eq', value: 'At Risk' },
+        tone: 'danger',
+        label: 'Escalation',
+      },
+      {
+        target: { type: 'cell', columnKey: 'budget' },
+        when: { field: 'budget', op: 'gt', value: 100 },
+        tone: 'warning',
+      },
+    ]);
+
+    assert.equal(resolved.widgets[1].data.type, 'cardView');
+    assert.deepEqual(resolved.widgets[1].data.data.conditionalFormatting, [
+      {
+        target: { type: 'card' },
+        when: { field: 'status', op: 'in', values: ['At Risk'] },
+        tone: 'danger',
+        label: 'At-risk card',
+      },
+    ]);
   });
 
   it('preserves paginated query metadata from the data provider', async () => {
@@ -794,5 +1309,160 @@ describe('kpi validation parity', () => {
       totalCount: 1400,
       limit: 1000,
     });
+  });
+
+  it('accepts timelineView configs when the referenced fields exist', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'project-timeline',
+        title: 'Project Timeline',
+        layout: 'singleColumn',
+        dataSources: {
+          milestones: {
+            name: 'milestones',
+            query: 'milestones',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'timelineView',
+            id: 'timeline',
+            title: 'Milestones',
+            dataSource: 'milestones',
+            config: {
+              startDateKey: 'startDate',
+              endDateKey: 'endDate',
+              labelKey: 'name',
+              groupKey: 'project',
+              statusKey: 'status',
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['milestones'],
+        availableFields: {
+          milestones: ['id', 'name', 'startDate', 'endDate', 'project', 'status'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, true);
+  });
+
+  it('rejects summary delivery for gantt charts', () => {
+    const validation = validateReportSpec(
+      {
+        id: 'project-gantt',
+        title: 'Project Gantt',
+        layout: 'singleColumn',
+        dataSources: {
+          milestones: {
+            name: 'milestones',
+            query: 'milestones',
+            delivery: {
+              mode: 'summary',
+            },
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'ganttChart',
+            id: 'timeline',
+            title: 'Milestones',
+            dataSource: 'milestones',
+            config: {
+              startDateKey: 'startDate',
+              endDateKey: 'endDate',
+              labelKey: 'name',
+            },
+          },
+        ],
+      },
+      {
+        availableQueries: ['milestones'],
+        availableFields: {
+          milestones: ['name', 'startDate', 'endDate'],
+        },
+      }
+    );
+
+    assert.equal(validation.valid, false);
+    assert.match(validation.errors.join('\n'), /cannot use summary dataSource/);
+  });
+
+  it('normalizes timeline items to UTC ranges and assigns overlap lanes', async () => {
+    const resolved = await resolveReport(
+      {
+        id: 'project-timeline-runtime',
+        title: 'Project Timeline',
+        layout: 'singleColumn',
+        dataSources: {
+          milestones: {
+            name: 'milestones',
+            query: 'milestones',
+          },
+        },
+        filters: [],
+        widgets: [
+          {
+            type: 'timelineView',
+            id: 'timeline',
+            title: 'Milestones',
+            dataSource: 'milestones',
+            config: {
+              startDateKey: 'startDate',
+              endDateKey: 'endDate',
+              labelKey: 'name',
+              groupKey: 'project',
+              statusKey: 'status',
+            },
+          },
+        ],
+      },
+      {
+        async runQuery() {
+          return [
+            {
+              id: 'm1',
+              name: 'Design',
+              project: 'Atlas',
+              status: 'Done',
+              startDate: '2025-03-01',
+              endDate: '2025-03-10',
+            },
+            {
+              id: 'm2',
+              name: 'Implementation',
+              project: 'Atlas',
+              status: 'In Progress',
+              startDate: '2025-03-05',
+              endDate: '2025-03-20',
+            },
+            {
+              id: 'm3',
+              name: 'Go-live',
+              project: 'Orion',
+              status: 'Planned',
+              startDate: '2025-03-22',
+              endDate: '2025-03-22',
+            },
+          ];
+        },
+      }
+    );
+
+    assert.equal(resolved.widgets[0].data.type, 'timelineView');
+    const timeline = resolved.widgets[0].data.data;
+    assert.equal(timeline.groups.length, 2);
+    assert.equal(timeline.groups[0].label, 'Atlas');
+    assert.equal(timeline.groups[0].laneCount, 2);
+    assert.equal(timeline.groups[0].items[0].lane, 0);
+    assert.equal(timeline.groups[0].items[1].lane, 1);
+    assert.equal(timeline.groups[1].items[0].endMs - timeline.groups[1].items[0].startMs, 86400000);
+    assert.equal(timeline.rangeStartAt, '2025-03-01T00:00:00.000Z');
+    assert.equal(timeline.rangeEndAt, '2025-03-23T00:00:00.000Z');
   });
 });

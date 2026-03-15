@@ -13,16 +13,25 @@ import type {
   BarChartWidgetSpec,
   LineChartWidgetSpec,
   AreaChartWidgetSpec,
+  SpiralChartWidgetSpec,
   PieChartWidgetSpec,
   DoughnutChartWidgetSpec,
   StackedBarChartWidgetSpec,
   FunnelChartWidgetSpec,
   ScatterChartWidgetSpec,
+  BubbleChartWidgetSpec,
+  TimelineViewWidgetSpec,
+  GanttChartWidgetSpec,
   KpiWidgetSpec,
   DataSourceSpec,
   SortItem,
   AggregationSpec,
   TableSummarySpec,
+  ConditionalFormattingCondition,
+  ConditionalFormattingScalar,
+  ConditionalFormattingTone,
+  TableConditionalFormattingRule,
+  CardConditionalFormattingRule,
   PolicyResult,
   ReportAuditEvent,
 } from "./types.js";
@@ -43,6 +52,26 @@ const VALID_TABLE_SUMMARY_OPS = [
   "latest",
   "earliest",
   "distinct",
+] as const;
+const VALID_CONDITIONAL_FORMATTING_TONES = [
+  "danger",
+  "warning",
+  "success",
+  "info",
+  "neutral",
+] as const;
+const VALID_CONDITIONAL_FORMATTING_SINGLE_VALUE_OPS = [
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "eq",
+  "neq",
+] as const;
+const VALID_CONDITIONAL_FORMATTING_OPS = [
+  ...VALID_CONDITIONAL_FORMATTING_SINGLE_VALUE_OPS,
+  "between",
+  "in",
 ] as const;
 
 export interface ValidationDiagnostic {
@@ -130,15 +159,18 @@ export interface ResolvedTableData {
   rows: Record<string, unknown>[];
   columns: Array<{ key: string; label: string }>;
   /** When table has groupByKey, rows are grouped; UI renders one section per group. */
-  groups?: Array<{ label: string; rows: Record<string, unknown>[] }>;
+  groups?: Array<{ label: string; rows: Record<string, unknown>[]; summaryRow?: Record<string, unknown> }>;
   /** Footer row: key -> aggregated value for columns with aggregations. */
   footer?: Record<string, unknown>;
+  footerLabel?: string;
+  groupSummaryLabel?: string;
   /** When set, rows are clickable / link column; URL built from urlTemplate and row values (paramKeys). */
   drillDown?: {
     urlTemplate: string;
     paramKeys?: string[];
     target?: "_self" | "_blank";
   };
+  conditionalFormatting?: TableConditionalFormattingRule[];
 }
 
 export interface ResolvedCardViewData {
@@ -158,6 +190,7 @@ export interface ResolvedCardViewData {
   };
   template: "compact" | "detailed";
   emptyStateText?: string;
+  conditionalFormatting?: CardConditionalFormattingRule[];
 }
 
 export interface ResolvedPaginationMetadata {
@@ -200,11 +233,61 @@ export interface ResolvedPieChartData {
   valueKey: string;
 }
 
+export interface ResolvedSpiralChartData {
+  data: Array<Record<string, unknown>>;
+  categoryKey: string;
+  valueKey: string;
+}
+
 export interface ResolvedScatterChartData {
   data: Array<Record<string, unknown>>;
   xKey: string;
   yKey: string;
   zKey?: string;
+}
+
+export interface ResolvedBubbleChartData {
+  data: Array<Record<string, unknown>>;
+  xKey: string;
+  yKey: string;
+  zKey: string;
+  labelKey?: string;
+  seriesKey?: string;
+}
+
+export interface ResolvedTimelineItem {
+  id: string;
+  label: string;
+  startAt: string;
+  endAt: string;
+  startMs: number;
+  endMs: number;
+  lane: number;
+  group: string;
+  groupLabel: string;
+  status?: string;
+  source: Record<string, unknown>;
+}
+
+export interface ResolvedTimelineGroup {
+  key: string;
+  label: string;
+  laneCount: number;
+  items: ResolvedTimelineItem[];
+}
+
+export interface ResolvedTimelineChartData {
+  items: ResolvedTimelineItem[];
+  groups: ResolvedTimelineGroup[];
+  startDateKey: string;
+  endDateKey: string;
+  labelKey: string;
+  groupKey?: string;
+  statusKey?: string;
+  rangeStartAt: string;
+  rangeEndAt: string;
+  rangeStartMs: number;
+  rangeEndMs: number;
 }
 
 export interface ResolvedKpiData {
@@ -226,10 +309,14 @@ export type ResolvedWidgetData =
   | { type: "stackedBarChart"; data: ResolvedStackedBarChartData }
   | { type: "lineChart"; data: ResolvedLineChartData }
   | { type: "areaChart"; data: ResolvedLineChartData }
+  | { type: "spiralChart"; data: ResolvedSpiralChartData }
   | { type: "pieChart"; data: ResolvedPieChartData }
   | { type: "doughnutChart"; data: ResolvedPieChartData }
   | { type: "funnelChart"; data: ResolvedPieChartData }
   | { type: "scatterChart"; data: ResolvedScatterChartData }
+  | { type: "bubbleChart"; data: ResolvedBubbleChartData }
+  | { type: "timelineView"; data: ResolvedTimelineChartData }
+  | { type: "ganttChart"; data: ResolvedTimelineChartData }
   | { type: "kpi"; data: ResolvedKpiData };
 
 export interface ResolvedWidget {
@@ -357,6 +444,118 @@ export function validateReportSpec(
         "unknown-field-reference",
         `${label} "${fieldName}" is not available on query "${queryName}"`,
         "Use one of the fields exposed by the query catalog for this query."
+      );
+    }
+  };
+
+  const isConditionalFormattingScalar = (
+    value: unknown
+  ): value is ConditionalFormattingScalar =>
+    (typeof value === "string" && value.trim().length > 0) ||
+    (typeof value === "number" && !Number.isNaN(value));
+
+  const validateConditionalFormattingCondition = (
+    path: string,
+    queryName: string | undefined,
+    value: unknown
+  ) => {
+    if (!isRecord(value)) {
+      addError(
+        path,
+        "invalid-conditional-formatting-condition",
+        "Conditional formatting rule.when must be an object",
+        "Provide { field, op, value? | min/max? | values? }."
+      );
+      return;
+    }
+
+    validateFieldReference(`${path}.field`, queryName, value.field, "Conditional formatting field");
+
+    if (
+      !isNonEmptyString(value.op) ||
+      !VALID_CONDITIONAL_FORMATTING_OPS.includes(
+        value.op as typeof VALID_CONDITIONAL_FORMATTING_OPS[number]
+      )
+    ) {
+      addError(
+        `${path}.op`,
+        "invalid-conditional-formatting-op",
+        `Conditional formatting op must be one of ${VALID_CONDITIONAL_FORMATTING_OPS.join(", ")}`,
+        `Use one of: ${VALID_CONDITIONAL_FORMATTING_OPS.join(", ")}.`
+      );
+      return;
+    }
+
+    if (
+      VALID_CONDITIONAL_FORMATTING_SINGLE_VALUE_OPS.includes(
+        value.op as typeof VALID_CONDITIONAL_FORMATTING_SINGLE_VALUE_OPS[number]
+      )
+    ) {
+      if (!isConditionalFormattingScalar(value.value)) {
+        addError(
+          `${path}.value`,
+          "invalid-conditional-formatting-value",
+          `Conditional formatting op "${value.op}" requires a string or number value`,
+          "Provide a numeric threshold or a string/number comparison value."
+        );
+      }
+      return;
+    }
+
+    if (value.op === "between") {
+      if (!isConditionalFormattingScalar(value.min)) {
+        addError(
+          `${path}.min`,
+          "invalid-conditional-formatting-min",
+          'Conditional formatting op "between" requires a string or number min',
+          "Provide the lower bound as min."
+        );
+      }
+      if (!isConditionalFormattingScalar(value.max)) {
+        addError(
+          `${path}.max`,
+          "invalid-conditional-formatting-max",
+          'Conditional formatting op "between" requires a string or number max',
+          "Provide the upper bound as max."
+        );
+      }
+      return;
+    }
+
+    if (!Array.isArray(value.values) || value.values.length === 0) {
+      addError(
+        `${path}.values`,
+        "invalid-conditional-formatting-values",
+        'Conditional formatting op "in" requires a non-empty array of string/number values',
+        "Provide one or more match values, such as [\"RED\", \"AMBER\"]."
+      );
+      return;
+    }
+
+    for (const [index, item] of value.values.entries()) {
+      if (!isConditionalFormattingScalar(item)) {
+        addError(
+          `${path}.values.${index}`,
+          "invalid-conditional-formatting-values-item",
+          "Conditional formatting values entries must be strings or numbers",
+          "Use only string or numeric match values."
+        );
+      }
+    }
+  };
+
+  const validateConditionalFormattingTone = (path: string, tone: unknown) => {
+    if (
+      !isNonEmptyString(tone) ||
+      !VALID_CONDITIONAL_FORMATTING_TONES.includes(
+        tone as typeof VALID_CONDITIONAL_FORMATTING_TONES[number]
+      )
+    ) {
+      addError(
+        path,
+        "invalid-conditional-formatting-tone",
+        `Conditional formatting tone must be one of ${VALID_CONDITIONAL_FORMATTING_TONES.join(", ")}`,
+        `Use one of: ${VALID_CONDITIONAL_FORMATTING_TONES.join(", ")}.`
       );
     }
   };
@@ -898,12 +1097,42 @@ export function validateReportSpec(
       );
     }
 
+    if (
+      dataSourceDelivery?.mode === "summary" &&
+      widget.type !== "table" &&
+      widget.type !== "kpi"
+    ) {
+      addError(
+        `${path}.dataSource`,
+        "invalid-widget-delivery-mode",
+        `Widget "${String(id ?? index)}" of type "${widget.type}" cannot use summary dataSource "${widget.dataSource}"`,
+        "Use delivery.mode = \"fullVisual\" for charts and timeline views, or switch to a KPI widget."
+      );
+    }
+
     switch (widget.type) {
       case "table": {
         const columns = widget.config.columns;
         const summary = widget.config.summary;
         const hasColumns = Array.isArray(columns);
         const hasSummary = Array.isArray(summary) && summary.length > 0;
+        const displayColumnKeys = new Set(
+          (
+            hasColumns
+              ? columns?.map((column) => (isRecord(column) ? String(column.key ?? "") : ""))
+              : hasSummary
+                ? buildDerivedSummaryColumns(
+                    summary as TableSummarySpec[],
+                    isNonEmptyString(widget.config.groupByKey)
+                      ? widget.config.groupByKey
+                      : undefined,
+                    isNonEmptyString(widget.config.groupLabelKey)
+                      ? widget.config.groupLabelKey
+                      : undefined
+                  ).map((column) => column.key)
+                : []
+          ).filter((key) => key.trim() !== "")
+        );
 
         if (!hasColumns && !hasSummary) {
           addError(
@@ -1070,6 +1299,65 @@ export function validateReportSpec(
           );
         }
 
+        const groupAggs = widget.config.groupAggregations;
+        if (groupAggs !== undefined) {
+          if (!Array.isArray(groupAggs) || groupAggs.length === 0) {
+            addError(
+              `${path}.config.groupAggregations`,
+              "invalid-group-aggregations",
+              "Table groupAggregations must be a non-empty array",
+              "Provide an array of { key: string, op: \"sum\" | \"avg\" | \"min\" | \"max\" | \"count\" }."
+            );
+          } else if (!isNonEmptyString(widget.config.groupByKey)) {
+            addError(
+              `${path}.config.groupAggregations`,
+              "group-aggregations-requires-group-by",
+              "Table groupAggregations requires config.groupByKey",
+              "Add config.groupByKey to enable grouped subtotal rows."
+            );
+          } else {
+            for (const [aggIndex, agg] of groupAggs.entries()) {
+              if (!isRecord(agg)) {
+                addError(
+                  `${path}.config.groupAggregations.${aggIndex}`,
+                  "invalid-group-aggregation-item",
+                  "Group aggregation must be an object with key and op",
+                  "Provide { key: string, op: \"sum\" | \"avg\" | \"min\" | \"max\" | \"count\" }."
+                );
+              } else {
+                if (!isNonEmptyString(agg.key)) {
+                  addError(
+                    `${path}.config.groupAggregations.${aggIndex}.key`,
+                    "invalid-group-aggregation-key",
+                    "Group aggregation key must be a non-empty string",
+                    "Use a row field key from the query result."
+                  );
+                } else {
+                  validateFieldReference(
+                    `${path}.config.groupAggregations.${aggIndex}.key`,
+                    queryName,
+                    agg.key,
+                    "Table group aggregation key"
+                  );
+                }
+                if (
+                  agg.op !== undefined &&
+                  !VALID_AGGREGATION_OPS.includes(
+                    String(agg.op) as typeof VALID_AGGREGATION_OPS[number]
+                  )
+                ) {
+                  addError(
+                    `${path}.config.groupAggregations.${aggIndex}.op`,
+                    "invalid-group-aggregation-op",
+                    `Group aggregation op must be one of ${VALID_AGGREGATION_OPS.join(", ")}`,
+                    `Set op to one of: ${VALID_AGGREGATION_OPS.join(", ")}.`
+                  );
+                }
+              }
+            }
+          }
+        }
+
         const aggs = widget.config.aggregations;
         if (aggs !== undefined) {
           if (!Array.isArray(aggs)) {
@@ -1166,6 +1454,75 @@ export function validateReportSpec(
               "Table drillDown.target must be \"_self\" or \"_blank\"",
               "Use _blank to open in new tab (default), or _self to navigate in same window."
             );
+          }
+        }
+
+        const conditionalFormatting = widget.config.conditionalFormatting;
+        if (conditionalFormatting !== undefined) {
+          if (!Array.isArray(conditionalFormatting) || conditionalFormatting.length === 0) {
+            addError(
+              `${path}.config.conditionalFormatting`,
+              "invalid-table-conditional-formatting",
+              "Table conditionalFormatting must be a non-empty array when present",
+              "Provide an array of row/cell rules, or omit the field."
+            );
+          } else {
+            for (const [ruleIndex, rule] of conditionalFormatting.entries()) {
+              const rulePath = `${path}.config.conditionalFormatting.${ruleIndex}`;
+              if (!isRecord(rule)) {
+                addError(
+                  rulePath,
+                  "invalid-table-conditional-formatting-rule",
+                  "Table conditional formatting rules must be objects",
+                  "Provide { target, when, tone, label? }."
+                );
+                continue;
+              }
+
+              if (!isRecord(rule.target) || !isNonEmptyString(rule.target.type)) {
+                addError(
+                  `${rulePath}.target`,
+                  "invalid-table-conditional-formatting-target",
+                  "Table conditional formatting target must be an object with type",
+                  'Use { type: "row" } or { type: "cell", columnKey: "fieldName" }.'
+                );
+              } else if (rule.target.type === "cell") {
+                if (!isNonEmptyString(rule.target.columnKey)) {
+                  addError(
+                    `${rulePath}.target.columnKey`,
+                    "invalid-table-conditional-formatting-column-key",
+                    'Table cell conditional formatting requires a non-empty target.columnKey',
+                    "Use a displayed table column key."
+                  );
+                } else if (!displayColumnKeys.has(rule.target.columnKey)) {
+                  addError(
+                    `${rulePath}.target.columnKey`,
+                    "unknown-table-conditional-formatting-column-key",
+                    `Table conditional formatting columnKey "${rule.target.columnKey}" is not a displayed column`,
+                    "Use one of the configured or derived table column keys."
+                  );
+                }
+              } else if (rule.target.type !== "row") {
+                addError(
+                  `${rulePath}.target.type`,
+                  "invalid-table-conditional-formatting-target-type",
+                  'Table conditional formatting target.type must be "row" or "cell"',
+                  'Use { type: "row" } or { type: "cell", columnKey: "fieldName" }.'
+                );
+              }
+
+              validateConditionalFormattingCondition(`${rulePath}.when`, queryName, rule.when);
+              validateConditionalFormattingTone(`${rulePath}.tone`, rule.tone);
+
+              if (rule.label !== undefined && !isNonEmptyString(rule.label)) {
+                addError(
+                  `${rulePath}.label`,
+                  "invalid-table-conditional-formatting-label",
+                  "Table conditional formatting label must be a non-empty string when present",
+                  "Omit label or provide a short description."
+                );
+              }
+            }
           }
         }
         break;
@@ -1330,6 +1687,52 @@ export function validateReportSpec(
             "Card view emptyStateText must be a non-empty string when present",
             "Provide user-facing empty-state text, or omit the field."
           );
+        }
+
+        const conditionalFormatting = widget.config.conditionalFormatting;
+        if (conditionalFormatting !== undefined) {
+          if (!Array.isArray(conditionalFormatting) || conditionalFormatting.length === 0) {
+            addError(
+              `${path}.config.conditionalFormatting`,
+              "invalid-card-conditional-formatting",
+              "Card view conditionalFormatting must be a non-empty array when present",
+              "Provide an array of card rules, or omit the field."
+            );
+          } else {
+            for (const [ruleIndex, rule] of conditionalFormatting.entries()) {
+              const rulePath = `${path}.config.conditionalFormatting.${ruleIndex}`;
+              if (!isRecord(rule)) {
+                addError(
+                  rulePath,
+                  "invalid-card-conditional-formatting-rule",
+                  "Card conditional formatting rules must be objects",
+                  "Provide { target, when, tone, label? }."
+                );
+                continue;
+              }
+
+              if (!isRecord(rule.target) || rule.target.type !== "card") {
+                addError(
+                  `${rulePath}.target`,
+                  "invalid-card-conditional-formatting-target",
+                  'Card conditional formatting target must be { type: "card" }',
+                  'Use { type: "card" }.'
+                );
+              }
+
+              validateConditionalFormattingCondition(`${rulePath}.when`, queryName, rule.when);
+              validateConditionalFormattingTone(`${rulePath}.tone`, rule.tone);
+
+              if (rule.label !== undefined && !isNonEmptyString(rule.label)) {
+                addError(
+                  `${rulePath}.label`,
+                  "invalid-card-conditional-formatting-label",
+                  "Card conditional formatting label must be a non-empty string when present",
+                  "Omit label or provide a short description."
+                );
+              }
+            }
+          }
         }
         break;
       }
@@ -1535,17 +1938,18 @@ export function validateReportSpec(
         break;
       }
       case "lineChart":
+      case "spiralChart":
         validateFieldReference(
           `${path}.config.categoryKey`,
           queryName,
           widget.config.categoryKey,
-          "Line chart categoryKey"
+          `${widget.type} categoryKey`
         );
         validateFieldReference(
           `${path}.config.valueKey`,
           queryName,
           widget.config.valueKey,
-          "Line chart valueKey"
+          `${widget.type} valueKey`
         );
         break;
       case "scatterChart":
@@ -1570,12 +1974,85 @@ export function validateReportSpec(
           );
         }
         break;
+      case "bubbleChart":
+        validateFieldReference(
+          `${path}.config.xKey`,
+          queryName,
+          widget.config.xKey,
+          "Bubble chart xKey"
+        );
+        validateFieldReference(
+          `${path}.config.yKey`,
+          queryName,
+          widget.config.yKey,
+          "Bubble chart yKey"
+        );
+        validateFieldReference(
+          `${path}.config.zKey`,
+          queryName,
+          widget.config.zKey,
+          "Bubble chart zKey"
+        );
+        if (widget.config.labelKey !== undefined) {
+          validateFieldReference(
+            `${path}.config.labelKey`,
+            queryName,
+            widget.config.labelKey,
+            "Bubble chart labelKey"
+          );
+        }
+        if (widget.config.seriesKey !== undefined) {
+          validateFieldReference(
+            `${path}.config.seriesKey`,
+            queryName,
+            widget.config.seriesKey,
+            "Bubble chart seriesKey"
+          );
+        }
+        break;
+      case "timelineView":
+      case "ganttChart":
+        validateFieldReference(
+          `${path}.config.startDateKey`,
+          queryName,
+          widget.config.startDateKey,
+          `${widget.type} startDateKey`
+        );
+        validateFieldReference(
+          `${path}.config.endDateKey`,
+          queryName,
+          widget.config.endDateKey,
+          `${widget.type} endDateKey`
+        );
+        validateFieldReference(
+          `${path}.config.labelKey`,
+          queryName,
+          widget.config.labelKey,
+          `${widget.type} labelKey`
+        );
+        if (widget.config.groupKey !== undefined) {
+          validateFieldReference(
+            `${path}.config.groupKey`,
+            queryName,
+            widget.config.groupKey,
+            `${widget.type} groupKey`
+          );
+        }
+        if (widget.config.statusKey !== undefined) {
+          validateFieldReference(
+            `${path}.config.statusKey`,
+            queryName,
+            widget.config.statusKey,
+            `${widget.type} statusKey`
+          );
+        }
+        break;
       default:
         addError(
           `${path}.type`,
           "unsupported-widget-type",
           `Widget "${String(id ?? index)}" uses unsupported type "${String(widget.type)}"`,
-          'Use one of "table", "cardView", "barChart", "lineChart", "areaChart", "pieChart", "doughnutChart", "stackedBarChart", "funnelChart", "scatterChart", or "kpi".'
+          'Use one of "table", "cardView", "barChart", "lineChart", "areaChart", "spiralChart", "pieChart", "doughnutChart", "stackedBarChart", "funnelChart", "scatterChart", "bubbleChart", "timelineView", "ganttChart", or "kpi".'
         );
     }
   }
@@ -1809,6 +2286,159 @@ function sortRowsByCategory(
   return copy;
 }
 
+function parseDateValueToUtcTimestamp(value: unknown): number | null {
+  if (value instanceof Date) {
+    const timestamp = value.getTime();
+    return Number.isNaN(timestamp) ? null : timestamp;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const dateOnlyMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const month = Number(dateOnlyMatch[2]);
+    const day = Number(dateOnlyMatch[3]);
+    return Date.UTC(year, month - 1, day);
+  }
+
+  const timestamp = Date.parse(trimmed);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function formatUtcTimestamp(value: number): string {
+  return new Date(value).toISOString();
+}
+
+function buildTimelineData(
+  rows: Record<string, unknown>[],
+  config: {
+    startDateKey: string;
+    endDateKey: string;
+    labelKey: string;
+    groupKey?: string;
+    statusKey?: string;
+  }
+): ResolvedTimelineChartData {
+  const normalizedItems = rows
+    .map((row, index) => {
+      const startMs = parseDateValueToUtcTimestamp(row[config.startDateKey]);
+      const endMs = parseDateValueToUtcTimestamp(row[config.endDateKey]);
+      if (startMs == null || endMs == null) return null;
+
+      const rawStartMs = Math.min(startMs, endMs);
+      const rawEndMs = Math.max(startMs, endMs);
+      const normalizedEndMs = rawEndMs === rawStartMs ? rawEndMs + 24 * 60 * 60 * 1000 : rawEndMs;
+      const groupValue = config.groupKey != null ? row[config.groupKey] : undefined;
+      const groupLabel = groupValue == null || groupValue === "" ? "Ungrouped" : String(groupValue);
+      const rawLabel = row[config.labelKey];
+      const label = rawLabel == null || rawLabel === "" ? `Item ${index + 1}` : String(rawLabel);
+      const statusValue =
+        config.statusKey != null && row[config.statusKey] != null && row[config.statusKey] !== ""
+          ? String(row[config.statusKey])
+          : undefined;
+
+      return {
+        id:
+          row.id != null && row.id !== ""
+            ? String(row.id)
+            : `${groupLabel}:${label}:${rawStartMs}:${index}`,
+        label,
+        startAt: formatUtcTimestamp(rawStartMs),
+        endAt: formatUtcTimestamp(normalizedEndMs),
+        startMs: rawStartMs,
+        endMs: normalizedEndMs,
+        lane: 0,
+        group: groupLabel,
+        groupLabel,
+        ...(statusValue ? { status: statusValue } : {}),
+        source: row,
+      } satisfies ResolvedTimelineItem;
+    })
+    .filter((item): item is ResolvedTimelineItem => item != null)
+    .sort((a, b) => {
+      if (a.groupLabel !== b.groupLabel) {
+        return a.groupLabel.localeCompare(b.groupLabel, undefined, { numeric: true });
+      }
+      if (a.startMs !== b.startMs) return a.startMs - b.startMs;
+      if (a.endMs !== b.endMs) return a.endMs - b.endMs;
+      return a.label.localeCompare(b.label, undefined, { numeric: true });
+    });
+
+  if (normalizedItems.length === 0) {
+    const now = Date.now();
+    return {
+      items: [],
+      groups: [],
+      startDateKey: config.startDateKey,
+      endDateKey: config.endDateKey,
+      labelKey: config.labelKey,
+      ...(config.groupKey ? { groupKey: config.groupKey } : {}),
+      ...(config.statusKey ? { statusKey: config.statusKey } : {}),
+      rangeStartAt: formatUtcTimestamp(now),
+      rangeEndAt: formatUtcTimestamp(now + 24 * 60 * 60 * 1000),
+      rangeStartMs: now,
+      rangeEndMs: now + 24 * 60 * 60 * 1000,
+    };
+  }
+
+  const groupsByKey = new Map<string, ResolvedTimelineItem[]>();
+  for (const item of normalizedItems) {
+    const existing = groupsByKey.get(item.group);
+    if (existing) existing.push(item);
+    else groupsByKey.set(item.group, [item]);
+  }
+
+  const groups: ResolvedTimelineGroup[] = [];
+  for (const [key, items] of groupsByKey.entries()) {
+    const laneEndTimes: number[] = [];
+    for (const item of items) {
+      let assignedLane = 0;
+      while (
+        assignedLane < laneEndTimes.length &&
+        item.startMs < laneEndTimes[assignedLane]
+      ) {
+        assignedLane += 1;
+      }
+      item.lane = assignedLane;
+      laneEndTimes[assignedLane] = item.endMs;
+    }
+
+    groups.push({
+      key,
+      label: items[0]?.groupLabel ?? key,
+      laneCount: Math.max(1, laneEndTimes.length),
+      items,
+    });
+  }
+
+  const rangeStartMs = Math.min(...normalizedItems.map((item) => item.startMs));
+  const rangeEndMs = Math.max(...normalizedItems.map((item) => item.endMs));
+
+  return {
+    items: normalizedItems,
+    groups,
+    startDateKey: config.startDateKey,
+    endDateKey: config.endDateKey,
+    labelKey: config.labelKey,
+    ...(config.groupKey ? { groupKey: config.groupKey } : {}),
+    ...(config.statusKey ? { statusKey: config.statusKey } : {}),
+    rangeStartAt: formatUtcTimestamp(rangeStartMs),
+    rangeEndAt: formatUtcTimestamp(rangeEndMs),
+    rangeStartMs,
+    rangeEndMs,
+  };
+}
+
 function applyLimit(
   rows: Record<string, unknown>[],
   limit: number | undefined,
@@ -1873,6 +2503,65 @@ function normalizeCardFieldList(
   return fields.map((field) => ({
     key: field.key,
     label: field.label?.trim() || toHumanReadableLabel(field.key),
+  }));
+}
+
+function normalizeConditionalFormattingCondition(
+  condition: ConditionalFormattingCondition
+): ConditionalFormattingCondition {
+  switch (condition.op) {
+    case "between":
+      return {
+        field: condition.field,
+        op: condition.op,
+        min: condition.min,
+        max: condition.max,
+      };
+    case "in":
+      return {
+        field: condition.field,
+        op: condition.op,
+        values: [...condition.values],
+      };
+    default:
+      return {
+        field: condition.field,
+        op: condition.op,
+        value: condition.value,
+      };
+  }
+}
+
+function normalizeTableConditionalFormatting(
+  rules: TableConditionalFormattingRule[] | undefined
+): TableConditionalFormattingRule[] | undefined {
+  if (!rules || rules.length === 0) return undefined;
+  return rules.map((rule) =>
+    rule.target.type === "cell"
+      ? {
+          target: { type: "cell", columnKey: rule.target.columnKey },
+          when: normalizeConditionalFormattingCondition(rule.when),
+          tone: rule.tone,
+          ...(rule.label?.trim() ? { label: rule.label.trim() } : {}),
+        }
+      : {
+          target: { type: "row" },
+          when: normalizeConditionalFormattingCondition(rule.when),
+          tone: rule.tone,
+          ...(rule.label?.trim() ? { label: rule.label.trim() } : {}),
+        }
+  );
+}
+
+function normalizeCardConditionalFormatting(
+  rules: CardConditionalFormattingRule[] | undefined
+): CardConditionalFormattingRule[] | undefined {
+  if (!rules || rules.length === 0) return undefined;
+  return rules.map((rule) => ({
+    target: { type: "card" },
+    when: normalizeConditionalFormattingCondition(rule.when),
+    tone: rule.tone,
+    ...(rule.label?.trim() ? { label: rule.label.trim() } : {}),
   }));
 }
 
@@ -2384,7 +3073,12 @@ export async function resolveReport(
       const groupByKey = tableSpec.config.groupByKey;
       const groupLabelKey = tableSpec.config.groupLabelKey?.trim();
       const summary = tableSpec.config.summary;
-      let groups: Array<{ label: string; rows: Record<string, unknown>[] }> | undefined;
+      const groupAggregations = tableSpec.config.groupAggregations;
+      const groupSummaryLabel = tableSpec.config.groupSummaryLabel?.trim() || "Subtotal";
+      const grandTotalLabel = tableSpec.config.grandTotalLabel?.trim() || "Grand total";
+      let groups:
+        | Array<{ label: string; rows: Record<string, unknown>[]; summaryRow?: Record<string, unknown> }>
+        | undefined;
 
       if (summary != null && summary.length > 0) {
         if (groupByKey && groupByKey.trim() !== "") {
@@ -2439,7 +3133,11 @@ export async function resolveReport(
             groupKey === "\0"
               ? "—"
               : (groupRows[0][labelKey] != null ? String(groupRows[0][labelKey]) : groupKey);
-          groups.push({ label, rows: groupRows });
+          const summaryRow =
+            groupAggregations != null && groupAggregations.length > 0
+              ? computeAggregations(groupRows, groupAggregations)
+              : undefined;
+          groups.push({ label, rows: groupRows, ...(summaryRow != null ? { summaryRow } : {}) });
         }
       } else if (widgetSort.length > 0) {
         tableRows = sortRows(tableRows, widgetSort);
@@ -2457,6 +3155,9 @@ export async function resolveReport(
         aggregations != null && aggregations.length > 0
           ? computeAggregations(tableRows, aggregations)
           : undefined;
+      const conditionalFormatting = normalizeTableConditionalFormatting(
+        tableSpec.config.conditionalFormatting
+      );
       resolvedWidgets.push({
         spec: widget,
         data: {
@@ -2466,7 +3167,12 @@ export async function resolveReport(
             columns,
             ...(groups && groups.length > 0 ? { groups } : {}),
             ...(footer != null ? { footer } : {}),
+            ...(footer != null ? { footerLabel: grandTotalLabel } : {}),
+            ...(groups && groups.some((group) => group.summaryRow != null)
+              ? { groupSummaryLabel }
+              : {}),
             ...(tableSpec.config.drillDown != null ? { drillDown: tableSpec.config.drillDown } : {}),
+            ...(conditionalFormatting ? { conditionalFormatting } : {}),
           },
         },
       });
@@ -2475,6 +3181,9 @@ export async function resolveReport(
       const badges = normalizeCardFieldList(cardSpec.config.badges);
       const metadata = normalizeCardFieldList(cardSpec.config.metadata);
       const primaryMetric = cardSpec.config.primaryMetric;
+      const conditionalFormatting = normalizeCardConditionalFormatting(
+        cardSpec.config.conditionalFormatting
+      );
       resolvedWidgets.push({
         spec: widget,
         data: {
@@ -2508,6 +3217,7 @@ export async function resolveReport(
             ...(cardSpec.config.emptyStateText
               ? { emptyStateText: cardSpec.config.emptyStateText }
               : {}),
+            ...(conditionalFormatting ? { conditionalFormatting } : {}),
           },
         },
       });
@@ -2575,6 +3285,19 @@ export async function resolveReport(
           },
         },
       });
+    } else if (widget.type === "spiralChart") {
+      const chartSpec = widget as SpiralChartWidgetSpec;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "spiralChart",
+          data: {
+            data: rows,
+            categoryKey: chartSpec.config.categoryKey,
+            valueKey: chartSpec.config.valueKey,
+          },
+        },
+      });
     } else if (widget.type === "pieChart") {
       const chartSpec = widget as PieChartWidgetSpec;
       resolvedWidgets.push({
@@ -2626,6 +3349,32 @@ export async function resolveReport(
             yKey: chartSpec.config.yKey,
             ...(chartSpec.config.zKey ? { zKey: chartSpec.config.zKey } : {}),
           },
+        },
+      });
+    } else if (widget.type === "bubbleChart") {
+      const chartSpec = widget as BubbleChartWidgetSpec;
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: "bubbleChart",
+          data: {
+            data: rows,
+            xKey: chartSpec.config.xKey,
+            yKey: chartSpec.config.yKey,
+            zKey: chartSpec.config.zKey,
+            ...(chartSpec.config.labelKey ? { labelKey: chartSpec.config.labelKey } : {}),
+            ...(chartSpec.config.seriesKey ? { seriesKey: chartSpec.config.seriesKey } : {}),
+          },
+        },
+      });
+    } else if (widget.type === "timelineView" || widget.type === "ganttChart") {
+      const chartSpec = widget as TimelineViewWidgetSpec | GanttChartWidgetSpec;
+      const timelineData = buildTimelineData(rows, chartSpec.config);
+      resolvedWidgets.push({
+        spec: widget,
+        data: {
+          type: widget.type,
+          data: timelineData,
         },
       });
     } else if (widget.type === "kpi") {

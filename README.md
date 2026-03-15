@@ -4,9 +4,9 @@ React report renderer and declarative spec: build report UIs from a **ReportSpec
 
 ## Features
 
-- **Declarative ReportSpec** — Define reports as JSON: data sources, filters, and widgets (tables, bar charts, KPIs). Safe for AI generation; no raw HTML or direct UI library control.
+- **Declarative ReportSpec** — Define reports as JSON: data sources, richer filters, layout/grouping primitives, and widgets ranging from grouped tables to KPI, card, chart, timeline, and gantt views. Safe for AI generation; no raw HTML or direct UI library control.
 - **Pluggable data** — Implement the `DataProvider` interface to feed data from any backend (REST, Workfront, etc.).
-- **React components** — `@reporting/react-ui` renders the spec with tables, charts (Recharts), and filter bars. Swap implementations via a component registry (e.g. Ant Design, MUI).
+- **React components** — `@reporting/react-ui` renders the spec with tables, cards, charts (Recharts), timelines, tabs/sections, presets, and filter bars. Swap implementations via a component registry (e.g. Ant Design, MUI).
 - **Validation & resolution** — Core engine validates specs and resolves reports with filter state and query execution.
 
 ## Repository structure
@@ -14,13 +14,13 @@ React report renderer and declarative spec: build report UIs from a **ReportSpec
 | Path | Description |
 |------|-------------|
 | `packages/core` | ReportSpec types, validation, resolution engine, and `DataProvider` interface. See [packages/core/README.md](packages/core/README.md) for the spec. |
-| `packages/react-ui` | React components that render ReportSpec (tables, bar charts, KPIs, filter bar). Depends on `@reporting/core` and Recharts. |
+| `packages/react-ui` | React components that render ReportSpec including grouped tables, cards, charts, timelines/gantt, tabs/sections, and filter bar. Depends on `@reporting/core` and Recharts. |
 | `apps/storybook` | Storybook app to develop and preview the renderer. |
 | `docs/` | Spec examples, natural-language → ReportSpec mappings, and org/repo setup. |
 
 ## Prerequisites
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20
 - **pnpm** (recommended) or npm
 
 ## Getting started
@@ -32,7 +32,7 @@ pnpm install
 # Build core and React UI packages
 pnpm run build
 
-# Run Storybook (builds packages then starts dev server on port 6006)
+# Run Storybook (starts dev server on port 6006)
 pnpm run dev
 # or
 pnpm run storybook
@@ -43,7 +43,7 @@ pnpm run storybook
 | Script | Description |
 |--------|-------------|
 | `build` | Build `@reporting/core` and `@reporting/react-ui`. |
-| `dev` / `storybook` | Build packages and start Storybook. |
+| `dev` / `storybook` | Start Storybook. |
 
 ## Using the renderer
 
@@ -56,8 +56,9 @@ The [reporting-portfolio-example](https://github.com/Prism-Reporting/reporting-p
 
 ## Documentation
 
-- [packages/core/README.md](packages/core/README.md) — ReportSpec schema, filter/widget variants, DataProvider, engine API.
-- [docs/natural-language-to-spec-examples.md](docs/natural-language-to-spec-examples.md) — Example mappings from natural language to ReportSpec (for future AI tooling).
+- [packages/core/README.md](packages/core/README.md) — ReportSpec schema, richer filter/widget variants, grouping/layout primitives, DataProvider, engine API.
+- [packages/mcp-server/README.md](packages/mcp-server/README.md) — MCP resources/tools for agent grounding, validation, and example discovery.
+- [docs/natural-language-to-spec-examples.md](docs/natural-language-to-spec-examples.md) — Example mappings from natural language to ReportSpec, including grouped tables and timeline/gantt patterns.
 - [docs/product-vision.md](docs/product-vision.md) — Project intent, open source posture, and business model direction.
 - [docs/GITHUB_ORG_SETUP.md](docs/GITHUB_ORG_SETUP.md) — Prism-Reporting org and repo setup.
 

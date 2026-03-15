@@ -91,10 +91,14 @@ export function ReportRenderer({
   const StackedBarChartComponent = registry.stackedBarChart;
   const LineChartComponent = registry.lineChart;
   const AreaChartComponent = registry.areaChart;
+  const SpiralChartComponent = registry.spiralChart;
   const PieChartComponent = registry.pieChart;
   const DoughnutChartComponent = registry.doughnutChart;
   const FunnelChartComponent = registry.funnelChart;
   const ScatterChartComponent = registry.scatterChart;
+  const BubbleChartComponent = registry.bubbleChart;
+  const TimelineViewComponent = registry.timelineView;
+  const GanttChartComponent = registry.ganttChart;
   const KpiComponent = registry.kpi;
   const registryRef = useMemo(
     () => ({
@@ -104,10 +108,14 @@ export function ReportRenderer({
       stackedBarChart: StackedBarChartComponent,
       lineChart: LineChartComponent,
       areaChart: AreaChartComponent,
+      spiralChart: SpiralChartComponent,
       pieChart: PieChartComponent,
       doughnutChart: DoughnutChartComponent,
       funnelChart: FunnelChartComponent,
       scatterChart: ScatterChartComponent,
+      bubbleChart: BubbleChartComponent,
+      timelineView: TimelineViewComponent,
+      ganttChart: GanttChartComponent,
       kpi: KpiComponent,
       filterBar: FilterBarComponent,
     }),
@@ -118,10 +126,14 @@ export function ReportRenderer({
       StackedBarChartComponent,
       LineChartComponent,
       AreaChartComponent,
+      SpiralChartComponent,
       PieChartComponent,
       DoughnutChartComponent,
       FunnelChartComponent,
       ScatterChartComponent,
+      BubbleChartComponent,
+      TimelineViewComponent,
+      GanttChartComponent,
       KpiComponent,
       FilterBarComponent,
     ]
@@ -669,6 +681,23 @@ function ReportWidget({
         onToggleCollapse={() => onToggleCollapse(spec.id)}
       />
     );
+  } else if (data.type === "spiralChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.spiralChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
   } else if (data.type === "pieChart") {
     content = blockReason ? (
       <VisualizationBlockedState
@@ -730,6 +759,57 @@ function ReportWidget({
       />
     ) : (
       <registry.scatterChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "bubbleChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.bubbleChart
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "timelineView") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.timelineView
+        title={spec.title}
+        data={data.data}
+        queryInfo={queryInfo}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    );
+  } else if (data.type === "ganttChart") {
+    content = blockReason ? (
+      <VisualizationBlockedState
+        title={spec.title}
+        message={blockReason}
+        collapsed={collapsed}
+        onToggleCollapse={() => onToggleCollapse(spec.id)}
+      />
+    ) : (
+      <registry.ganttChart
         title={spec.title}
         data={data.data}
         queryInfo={queryInfo}

@@ -5,8 +5,10 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "baseUrl": ".",
+    "lib": ["ES2020", "DOM"],
     "paths": {
-      "@reporting/core": ["../../packages/core/src"]
+      "@reporting/core": ["../../packages/core/src"],
+      "@reporting/react-ui": ["../../packages/react-ui/src/index.ts"]
     }
   },
   "include": ["src/**/*", ".storybook/**/*"]

@@ -82,7 +82,7 @@ export function createReportingMcpServer(
     {
       title: "Get Report Spec Guide",
       description:
-        "Load the full ReportSpec authoring guide: DSL structure, required fields, data sources, filters, widgets, presets, sections, tabs, and repair loop. Call this first before building or modifying a report so you know exactly how the report must be generated and what each part means.",
+        "Load the full ReportSpec authoring guide: DSL structure, required fields, delivery modes, filters, widgets, groups, presets, sections, tabs, timeline/gantt patterns, and repair loop. Call this first before building or modifying a report so you know exactly how the report must be generated and what each part means.",
     },
     async () => ({
       content: [
@@ -231,7 +231,16 @@ export function createReportingMcpServer(
       description: "Return a valid example ReportSpec for a common reporting pattern.",
       inputSchema: {
         pattern: z
-          .enum(["basic", "barChart", "pieChart", "kpi", "multiSource"])
+          .enum([
+            "basic",
+            "barChart",
+            "pieChart",
+            "kpi",
+            "multiSource",
+            "groupedTable",
+            "mixedFiltersWidgets",
+            "timeline",
+          ])
           .describe("The example pattern to retrieve."),
       },
     },

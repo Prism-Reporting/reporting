@@ -164,6 +164,64 @@ export interface TableSummarySpec {
   op: TableSummaryOp;
 }
 
+export type ConditionalFormattingTone =
+  | "danger"
+  | "warning"
+  | "success"
+  | "info"
+  | "neutral";
+
+export type ConditionalFormattingScalar = string | number;
+
+export type ConditionalFormattingOp =
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte"
+  | "between"
+  | "eq"
+  | "neq"
+  | "in";
+
+export type ConditionalFormattingCondition =
+  | {
+      field: string;
+      op: "gt" | "gte" | "lt" | "lte" | "eq" | "neq";
+      value: ConditionalFormattingScalar;
+    }
+  | {
+      field: string;
+      op: "between";
+      min: ConditionalFormattingScalar;
+      max: ConditionalFormattingScalar;
+    }
+  | {
+      field: string;
+      op: "in";
+      values: ConditionalFormattingScalar[];
+    };
+
+export type TableConditionalFormattingRule =
+  | {
+      target: { type: "row" };
+      when: ConditionalFormattingCondition;
+      tone: ConditionalFormattingTone;
+      label?: string;
+    }
+  | {
+      target: { type: "cell"; columnKey: string };
+      when: ConditionalFormattingCondition;
+      tone: ConditionalFormattingTone;
+      label?: string;
+    };
+
+export interface CardConditionalFormattingRule {
+  target: { type: "card" };
+  when: ConditionalFormattingCondition;
+  tone: ConditionalFormattingTone;
+  label?: string;
+}
+
 export interface WidgetSizeConstraints {
   minWidth: string;
   minHeight: string;
@@ -175,11 +233,15 @@ export const WIDGET_SIZE_CONSTRAINTS = {
   barChart: { minWidth: "320px", minHeight: "260px" },
   lineChart: { minWidth: "320px", minHeight: "260px" },
   areaChart: { minWidth: "320px", minHeight: "260px" },
+  spiralChart: { minWidth: "320px", minHeight: "260px" },
+  bubbleChart: { minWidth: "320px", minHeight: "260px" },
   pieChart: { minWidth: "320px", minHeight: "260px" },
   doughnutChart: { minWidth: "320px", minHeight: "260px" },
   stackedBarChart: { minWidth: "320px", minHeight: "260px" },
   funnelChart: { minWidth: "320px", minHeight: "260px" },
   scatterChart: { minWidth: "320px", minHeight: "260px" },
+  timelineView: { minWidth: "320px", minHeight: "260px" },
+  ganttChart: { minWidth: "320px", minHeight: "260px" },
   kpi: { minWidth: "180px", minHeight: "80px" },
 } as const satisfies Record<string, WidgetSizeConstraints>;
 
@@ -205,6 +267,12 @@ export interface TableWidgetConfig {
   summary?: TableSummarySpec[];
   /** Optional aggregations; footer row shows aggregated values for numeric columns. */
   aggregations?: AggregationSpec[];
+  /** Optional grouped subtotals shown under each raw group when `groupByKey` is set. */
+  groupAggregations?: AggregationSpec[];
+  /** Optional label used for each grouped subtotal row; defaults to "Subtotal". */
+  groupSummaryLabel?: string;
+  /** Optional label used for the grand total row; defaults to "Grand total". */
+  grandTotalLabel?: string;
   /** Optional widget-level sort; applied after dataSource sort when building table data. */
   sort?: SortItem | SortItem[];
   /** Optional drill-down: open URL with row values substituted; paramKeys list which row keys to use for placeholders. */
@@ -213,6 +281,8 @@ export interface TableWidgetConfig {
     paramKeys?: string[];
     target?: "_self" | "_blank";
   };
+  /** Optional conditional highlighting rules for rows or cells. */
+  conditionalFormatting?: TableConditionalFormattingRule[];
 }
 
 export interface BarChartWidgetConfig {
@@ -234,6 +304,11 @@ export interface AreaChartWidgetConfig {
 }
 
 export interface PieChartWidgetConfig {
+  categoryKey: string;
+  valueKey: string;
+}
+
+export interface SpiralChartWidgetConfig {
   categoryKey: string;
   valueKey: string;
 }
@@ -279,6 +354,8 @@ export interface CardWidgetConfig {
   primaryMetric?: CardMetricConfig;
   template?: "compact" | "detailed";
   emptyStateText?: string;
+  /** Optional conditional highlighting rules for cards. */
+  conditionalFormatting?: CardConditionalFormattingRule[];
 }
 
 export interface TableWidgetSpec {
@@ -359,6 +436,19 @@ export interface PieChartWidgetSpec {
   height?: string;
 }
 
+export interface SpiralChartWidgetSpec {
+  type: "spiralChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: SpiralChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
 export interface DoughnutChartWidgetSpec {
   type: "doughnutChart";
   id: string;
@@ -410,6 +500,22 @@ export interface ScatterChartWidgetConfig {
   zKey?: string;
 }
 
+export interface BubbleChartWidgetConfig {
+  xKey: string;
+  yKey: string;
+  zKey: string;
+  labelKey?: string;
+  seriesKey?: string;
+}
+
+export interface TimelineWidgetConfig {
+  startDateKey: string;
+  endDateKey: string;
+  labelKey: string;
+  groupKey?: string;
+  statusKey?: string;
+}
+
 export interface ScatterChartWidgetSpec {
   type: "scatterChart";
   id: string;
@@ -418,6 +524,45 @@ export interface ScatterChartWidgetSpec {
   /** Optional logical groups this widget belongs to. */
   groupIds?: string[];
   config: ScatterChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface BubbleChartWidgetSpec {
+  type: "bubbleChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: BubbleChartWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface TimelineViewWidgetSpec {
+  type: "timelineView";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: TimelineWidgetConfig;
+  /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
+  width?: string;
+  height?: string;
+}
+
+export interface GanttChartWidgetSpec {
+  type: "ganttChart";
+  id: string;
+  title?: string;
+  dataSource: string;
+  /** Optional logical groups this widget belongs to. */
+  groupIds?: string[];
+  config: TimelineWidgetConfig;
   /** Optional sizing hint. UI enforces a 320px minimum width and 260px minimum height. */
   width?: string;
   height?: string;
@@ -442,11 +587,15 @@ export type WidgetSpec =
   | BarChartWidgetSpec
   | LineChartWidgetSpec
   | AreaChartWidgetSpec
+  | SpiralChartWidgetSpec
   | PieChartWidgetSpec
   | DoughnutChartWidgetSpec
   | StackedBarChartWidgetSpec
   | FunnelChartWidgetSpec
   | ScatterChartWidgetSpec
+  | BubbleChartWidgetSpec
+  | TimelineViewWidgetSpec
+  | GanttChartWidgetSpec
   | KpiWidgetSpec;
 
 export function getWidgetSizeConstraints(type: WidgetSpec["type"]): WidgetSizeConstraints {
