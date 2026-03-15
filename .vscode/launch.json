@@ -13,6 +13,8 @@
         "@reporting/react-ui",
         "--filter",
         "@reporting/mcp-server",
+        "--filter",
+        "@reporting/agent-kit",
         "run",
         "build:watch"
       ],

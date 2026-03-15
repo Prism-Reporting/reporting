@@ -8,13 +8,16 @@ React report renderer and declarative spec: build report UIs from a **ReportSpec
 - **Pluggable data** — Implement the `DataProvider` interface to feed data from any backend (REST, Workfront, etc.).
 - **React components** — `@reporting/react-ui` renders the spec with tables, cards, charts (Recharts), timelines, tabs/sections, presets, and filter bars. Swap implementations via a component registry (e.g. Ant Design, MUI).
 - **Validation & resolution** — Core engine validates specs and resolves reports with filter state and query execution.
+- **Agent kit** — `@reporting/agent-kit` loads AgentSkills-compatible workflows, builds prompt context from the shared reporting contracts, and exposes local report-generation tools for app integrations.
 
 ## Repository structure
 
 | Path | Description |
 |------|-------------|
 | `packages/core` | ReportSpec types, validation, resolution engine, and `DataProvider` interface. See [packages/core/README.md](packages/core/README.md) for the spec. |
+| `packages/agent-kit` | Agent runtime helpers, generated AgentSkills support, and local report-generation tools built on top of the shared reporting context. |
 | `packages/react-ui` | React components that render ReportSpec including grouped tables, cards, charts, timelines/gantt, tabs/sections, and filter bar. Depends on `@reporting/core` and Recharts. |
+| `packages/mcp-server` | MCP resources and tools for report generation, validation, and query metadata discovery. |
 | `apps/storybook` | Storybook app to develop and preview the renderer. |
 | `docs/` | Spec examples, natural-language → ReportSpec mappings, and org/repo setup. |
 
@@ -42,7 +45,7 @@ pnpm run storybook
 
 | Script | Description |
 |--------|-------------|
-| `build` | Build `@reporting/core` and `@reporting/react-ui`. |
+| `build` | Build `@reporting/core`, `@reporting/react-ui`, `@reporting/mcp-server`, and `@reporting/agent-kit`. |
 | `dev` / `storybook` | Start Storybook. |
 
 ## Using the renderer
@@ -57,6 +60,7 @@ The [reporting-portfolio-example](https://github.com/Prism-Reporting/reporting-p
 ## Documentation
 
 - [packages/core/README.md](packages/core/README.md) — ReportSpec schema, richer filter/widget variants, grouping/layout primitives, DataProvider, engine API.
+- [packages/agent-kit](packages/agent-kit) — Agent runtime helpers, generated skills, and local report-generation tools.
 - [packages/mcp-server/README.md](packages/mcp-server/README.md) — MCP resources/tools for agent grounding, validation, and example discovery.
 - [docs/natural-language-to-spec-examples.md](docs/natural-language-to-spec-examples.md) — Example mappings from natural language to ReportSpec, including grouped tables and timeline/gantt patterns.
 - [docs/product-vision.md](docs/product-vision.md) — Project intent, open source posture, and business model direction.

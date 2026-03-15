@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "build": "pnpm --filter @reporting/core build && pnpm --filter @reporting/react-ui build && pnpm --filter @reporting/mcp-server build",
+    "build": "pnpm --filter @reporting/core build && pnpm --filter @reporting/react-ui build && pnpm --filter @reporting/mcp-server build && pnpm --filter @reporting/agent-kit build",
     "dev": "pnpm --filter @reporting/storybook storybook",
     "storybook": "pnpm --filter @reporting/storybook storybook"
   },

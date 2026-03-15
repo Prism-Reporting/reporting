@@ -34,16 +34,44 @@ export type QueryParamType =
   | "boolean[]"
   | "date[]";
 
+export type QueryFieldSemanticKind = "dimension" | "measure" | "time" | "id" | "label";
+export type QueryFieldWidgetRole =
+  | "category"
+  | "series"
+  | "value"
+  | "label"
+  | "time"
+  | "tooltip";
+export type QueryParamSemanticMode = "exact" | "multi" | "search" | "rangeFrom" | "rangeTo";
+
+export interface QueryFieldSemanticContract {
+  kind?: QueryFieldSemanticKind;
+  groupable?: boolean;
+  filterable?: boolean;
+  sortable?: boolean;
+  aggregatable?: boolean;
+  preferredWidgetRoles?: QueryFieldWidgetRole[];
+  exampleValues?: unknown[];
+}
+
+export interface QueryParamSemanticContract {
+  mapsToField?: string;
+  mode?: QueryParamSemanticMode;
+  exampleValues?: unknown[];
+}
+
 export interface QueryFieldContract {
   type: QueryScalarType;
   optional?: boolean;
   description?: string;
+  semantic?: QueryFieldSemanticContract;
 }
 
 export interface QueryParamContract {
   type: QueryParamType;
   optional?: boolean;
   description?: string;
+  semantic?: QueryParamSemanticContract;
 }
 
 function toSortedUniqueKeys(
@@ -57,6 +85,42 @@ function toSortedUniqueKeys(
       : [];
   const merged = [...new Set([...explicitKeys, ...shapeKeys])];
   return merged.length > 0 ? merged : undefined;
+}
+
+function formatExampleValues(values: unknown[] | undefined): string {
+  if (!Array.isArray(values) || values.length === 0) return "";
+  return values
+    .slice(0, 5)
+    .map((value) => JSON.stringify(value))
+    .join(", ");
+}
+
+function formatFieldContractForAgent(fieldName: string, contract: QueryFieldContract): string {
+  const parts = [`${fieldName} (${contract.type}${contract.optional ? ", optional" : ""})`];
+  const semantic = contract.semantic;
+  if (semantic?.kind) parts.push(`kind=${semantic.kind}`);
+  if (semantic?.groupable) parts.push("groupable");
+  if (semantic?.filterable) parts.push("filterable");
+  if (semantic?.sortable) parts.push("sortable");
+  if (semantic?.aggregatable) parts.push("aggregatable");
+  if (Array.isArray(semantic?.preferredWidgetRoles) && semantic.preferredWidgetRoles.length > 0) {
+    parts.push(`roles=${semantic.preferredWidgetRoles.join("/")}`);
+  }
+  if (contract.description) parts.push(contract.description);
+  const examples = formatExampleValues(semantic?.exampleValues);
+  if (examples) parts.push(`examples=${examples}`);
+  return parts.join("; ");
+}
+
+function formatParamContractForAgent(paramName: string, contract: QueryParamContract): string {
+  const parts = [`${paramName} (${contract.type}${contract.optional ? ", optional" : ""})`];
+  const semantic = contract.semantic;
+  if (semantic?.mapsToField) parts.push(`mapsTo=${semantic.mapsToField}`);
+  if (semantic?.mode) parts.push(`mode=${semantic.mode}`);
+  if (contract.description) parts.push(contract.description);
+  const examples = formatExampleValues(semantic?.exampleValues);
+  if (examples) parts.push(`examples=${examples}`);
+  return parts.join("; ");
 }
 
 export function defineQueryCatalog(
@@ -176,7 +240,52 @@ export interface ReportingContextProvider {
   getSemanticContext?(input?: ReportingContextProviderInput): Promise<SemanticReportingContext | null>;
 }
 
-// --- Agent grounding helper (Section 8.4) ---
+// --- Agent grounding helpers (Section 8.4) ---
+
+/**
+ * Turns base reporting context into a short text block for agent prompts.
+ * This is deterministic metadata and may be used for query/field grounding.
+ */
+export function formatBaseReportingContextForAgent(
+  baseContext: BaseReportingContext | null | undefined
+): string {
+  if (!baseContext || !Array.isArray(baseContext.queries) || baseContext.queries.length === 0) {
+    return "";
+  }
+
+  const lines: string[] = ["Dataset query cards:"];
+  for (const query of baseContext.queries) {
+    lines.push(`- ${query.name}: ${query.description ?? "No description available."}`);
+
+    if (Array.isArray(query.fields) && query.fields.length > 0) {
+      lines.push(`  Fields: ${query.fields.join(", ")}`);
+    }
+
+    if (query.fieldShape && Object.keys(query.fieldShape).length > 0) {
+      lines.push("  Field details:");
+      for (const [fieldName, contract] of Object.entries(query.fieldShape)) {
+        lines.push(`  - ${formatFieldContractForAgent(fieldName, contract)}`);
+      }
+    }
+
+    if (Array.isArray(query.params) && query.params.length > 0) {
+      lines.push(`  Params: ${query.params.join(", ")}`);
+    }
+
+    if (query.paramShape && Object.keys(query.paramShape).length > 0) {
+      lines.push("  Param details:");
+      for (const [paramName, contract] of Object.entries(query.paramShape)) {
+        lines.push(`  - ${formatParamContractForAgent(paramName, contract)}`);
+      }
+    }
+
+    if (query.notes) {
+      lines.push(`  Notes: ${query.notes}`);
+    }
+  }
+
+  return lines.join("\n");
+}
 
 /**
  * Turns optional semantic reporting context into a short text block for agent system prompts.
@@ -189,8 +298,26 @@ export function formatReportingContextForAgent(
 ): string {
   if (!semanticContext) return "";
   const parts: string[] = [];
+  if (Array.isArray(semanticContext.queryAliases) && semanticContext.queryAliases.length > 0) {
+    parts.push(
+      "Query aliases:",
+      ...semanticContext.queryAliases.map(
+        (alias) => `- "${alias.alias}" -> ${alias.queryName}`
+      )
+    );
+  }
+  if (Array.isArray(semanticContext.fieldAliases) && semanticContext.fieldAliases.length > 0) {
+    parts.push(
+      ...(parts.length > 0 ? [""] : []),
+      "Field aliases:",
+      ...semanticContext.fieldAliases.map((alias) =>
+        `- "${alias.alias}" -> ${alias.queryName ? `${alias.queryName}.` : ""}${alias.fieldKey}`
+      )
+    );
+  }
   if (Array.isArray(semanticContext.examples) && semanticContext.examples.length > 0) {
     parts.push(
+      ...(parts.length > 0 ? [""] : []),
       "Dataset examples (for grounding):",
       ...semanticContext.examples.map(
         (ex) =>
@@ -203,11 +330,26 @@ export function formatReportingContextForAgent(
     semanticContext.clarificationHints.length > 0
   ) {
     parts.push(
-      "",
+      ...(parts.length > 0 ? [""] : []),
       "Hints:",
       ...semanticContext.clarificationHints.map((h) => `- ${h.hint ?? ""}`)
     );
   }
   if (parts.length === 0) return "";
-  return "\n\n" + parts.join("\n");
+  return parts.join("\n");
+}
+
+/**
+ * Combines base and semantic reporting context into a single prompt-friendly text block.
+ */
+export function formatCombinedReportingContextForAgent(
+  baseContext: BaseReportingContext | null | undefined,
+  semanticContext: SemanticReportingContext | null | undefined
+): string {
+  const sections = [
+    formatBaseReportingContextForAgent(baseContext).trim(),
+    formatReportingContextForAgent(semanticContext).trim(),
+  ].filter((section) => section.length > 0);
+
+  return sections.join("\n\n");
 }

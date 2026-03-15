@@ -11,8 +11,10 @@
     "resolveJsonModule": true,
     "paths": {
       "@reporting/core": ["packages/core/dist/index.d.ts"],
+      "@reporting/agent-kit": ["packages/agent-kit/dist/index.d.ts"],
       "@reporting/react-ui": ["packages/react-ui/dist/index.d.ts"],
-      "@reporting/mcp-server": ["packages/mcp-server/dist/index.d.ts"]
+      "@reporting/mcp-server": ["packages/mcp-server/dist/index.d.ts"],
+      "@reporting/mcp-server/*": ["packages/mcp-server/dist/*"]
     },
     "declaration": true,
     "declarationMap": true,

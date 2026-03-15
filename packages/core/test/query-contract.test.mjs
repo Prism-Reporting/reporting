@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createContractEnforcedDataProvider,
   defineQueryCatalog,
+  formatBaseReportingContextForAgent,
   validateQueryResultAgainstCatalog,
 } from '../dist/index.js';
 
@@ -69,5 +70,57 @@ describe('query contracts', () => {
       () => provider.runQuery({ name: 'projectsSummary', execution: { deliveryMode: 'summary' } }),
       /expected "number"/
     );
+  });
+
+  it('preserves optional semantic metadata and formats it for agent grounding', () => {
+    const catalog = defineQueryCatalog([
+      {
+        name: 'projects',
+        description: 'Project list',
+        fieldShape: {
+          status: {
+            type: 'string',
+            semantic: {
+              kind: 'dimension',
+              filterable: true,
+              preferredWidgetRoles: ['category'],
+              exampleValues: ['NEW', 'DONE'],
+            },
+          },
+          budget: {
+            type: 'number',
+            semantic: {
+              kind: 'measure',
+              aggregatable: true,
+              preferredWidgetRoles: ['value'],
+            },
+          },
+        },
+        paramShape: {
+          status: {
+            type: 'string[]',
+            optional: true,
+            semantic: {
+              mapsToField: 'status',
+              mode: 'multi',
+              exampleValues: ['NEW', 'DONE'],
+            },
+          },
+        },
+      },
+    ]);
+
+    assert.equal(catalog.queries[0].fieldShape.status.semantic.kind, 'dimension');
+    assert.equal(catalog.queries[0].paramShape.status.semantic.mapsToField, 'status');
+
+    const text = formatBaseReportingContextForAgent({
+      source: 'test',
+      queries: catalog.queries,
+    });
+
+    assert.match(text, /Field details:/);
+    assert.match(text, /status \(string\); kind=dimension; filterable; roles=category; examples="NEW", "DONE"/);
+    assert.match(text, /Param details:/);
+    assert.match(text, /status \(string\[\], optional\); mapsTo=status; mode=multi; examples="NEW", "DONE"/);
   });
 });
