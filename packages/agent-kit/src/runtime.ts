@@ -6,8 +6,8 @@ import {
   type ReportingContextProvider,
   type SemanticReportingContext,
   type ValidationContext,
-} from "@reporting/core";
-import { getReportGenerationRules } from "@reporting/mcp-server/contract";
+} from "@prism-reporting/core";
+import { getReportGenerationRules } from "@prism-reporting/mcp-server/contract";
 
 export interface LoadedAgentSkill {
   path: string;

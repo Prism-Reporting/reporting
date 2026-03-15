@@ -6,7 +6,7 @@ import type {
   ReportingContextProvider,
   ReportingContextProviderInput,
   SemanticReportingContext,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 import { createReportingMcpServer } from "./server.js";
 import {
   baseContextToHostContext,

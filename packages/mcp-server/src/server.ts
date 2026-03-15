@@ -5,7 +5,7 @@ import {
   validateReportSpec,
   type PolicyResult,
   type ReportSpec,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 import {
   buildValidationContext,
   createQueryCatalogLoadResult,

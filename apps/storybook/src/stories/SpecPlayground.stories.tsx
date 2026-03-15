@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import type { ChangeEvent } from "react";
 import { useState } from "react";
-import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
+import { ReportRenderer, defaultRegistry } from "@prism-reporting/react-ui";
 import { tasksDataProvider } from "../mock-data";
-import type { ReportSpec } from "@reporting/core";
+import type { ReportSpec } from "@prism-reporting/core";
 import { reportStoryParameters, withReportFrame } from "../story-support/frames";
 
 const defaultSpec: ReportSpec = {

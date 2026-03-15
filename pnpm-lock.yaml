@@ -14,10 +14,10 @@ importers:
 
   apps/storybook:
     dependencies:
-      '@reporting/core':
+      '@prism-reporting/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@reporting/react-ui':
+      '@prism-reporting/react-ui':
         specifier: workspace:*
         version: link:../../packages/react-ui
       react:
@@ -54,10 +54,10 @@ importers:
 
   packages/agent-kit:
     dependencies:
-      '@reporting/core':
+      '@prism-reporting/core':
         specifier: workspace:^
         version: link:../core
-      '@reporting/mcp-server':
+      '@prism-reporting/mcp-server':
         specifier: workspace:^
         version: link:../mcp-server
       ai:
@@ -89,7 +89,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.27.1(zod@3.25.76)
-      '@reporting/core':
+      '@prism-reporting/core':
         specifier: workspace:^
         version: link:../core
       zod:
@@ -105,7 +105,7 @@ importers:
 
   packages/react-ui:
     dependencies:
-      '@reporting/core':
+      '@prism-reporting/core':
         specifier: workspace:^
         version: link:../core
       recharts:

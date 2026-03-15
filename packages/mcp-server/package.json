@@ -1,5 +1,5 @@
 {
-  "name": "@reporting/mcp-server",
+  "name": "@prism-reporting/mcp-server",
   "version": "0.1.0-beta.0",
   "description": "MCP server for Prism Reporting tools, resources, and query metadata discovery.",
   "type": "module",
@@ -42,7 +42,7 @@
     "test": "pnpm build && node --test test/*.test.js"
   },
   "dependencies": {
-    "@reporting/core": "workspace:^",
+    "@prism-reporting/core": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.23.0"
   },

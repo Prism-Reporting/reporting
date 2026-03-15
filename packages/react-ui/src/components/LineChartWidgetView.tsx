@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { LineChartProps } from "@reporting/core";
+import type { LineChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { ChartLegend } from "./ChartLegend.js";
 

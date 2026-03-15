@@ -11,7 +11,7 @@ import type {
   ScatterChartProps,
   StackedBarChartProps,
   TimelineChartProps,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 import {
   AreaChartView,
   BarChartView,
@@ -24,7 +24,7 @@ import {
   ScatterChartView,
   StackedBarChartView,
   TimelineChartView,
-} from "@reporting/react-ui";
+} from "@prism-reporting/react-ui";
 import {
   componentStoryParameters,
   withComponentFrame,

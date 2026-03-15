@@ -26,7 +26,7 @@ body:
     id: area
     attributes:
       label: Package or area
-      description: Example: @reporting/core, @reporting/agent-kit, @reporting/react-ui
+      description: Example: @prism-reporting/core, @prism-reporting/agent-kit, @prism-reporting/react-ui
     validations:
       required: true
   - type: textarea

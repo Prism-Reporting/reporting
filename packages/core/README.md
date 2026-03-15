@@ -1,10 +1,10 @@
-# @reporting/core
+# @prism-reporting/core
 
 Core types, engine, and interfaces for the reporting beta foundation.
 
 ## Beta status
 
-`@reporting/core` is currently in beta.
+`@prism-reporting/core` is currently in beta.
 
 - The DSL and runtime contracts are expected to evolve.
 - Breaking changes may happen without long deprecation windows during this phase.
@@ -170,7 +170,7 @@ Hosts may persist a report by saving the spec as JSON and restore it later. Use 
 
 ## Reporting context contract
 
-Shared types for **base** and **semantic** reporting context, and the **context provider** interface, are exported from `@reporting/core`. Both the MCP package and application code (e.g. starter example) can use these types.
+Shared types for **base** and **semantic** reporting context, and the **context provider** interface, are exported from `@prism-reporting/core`. Both the MCP package and application code (e.g. starter example) can use these types.
 
 ### Base reporting context
 

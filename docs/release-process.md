@@ -13,10 +13,10 @@ All public package releases are `beta` for now.
 
 The automated publish flow covers the public packages under `packages/`:
 
-- `@reporting/core`
-- `@reporting/react-ui`
-- `@reporting/mcp-server`
-- `@reporting/agent-kit`
+- `@prism-reporting/core`
+- `@prism-reporting/react-ui`
+- `@prism-reporting/mcp-server`
+- `@prism-reporting/agent-kit`
 
 ## Release steps
 

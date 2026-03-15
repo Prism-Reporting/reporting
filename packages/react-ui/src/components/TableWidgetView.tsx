@@ -1,6 +1,6 @@
 import { Fragment } from "react";
-import type { TableWidgetProps } from "@reporting/core";
-import { exportTableToCsv } from "@reporting/core";
+import type { TableWidgetProps } from "@prism-reporting/core";
+import { exportTableToCsv } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import {
   type ConditionalFormattingMatch,

@@ -4,7 +4,7 @@ import type {
   ConditionalFormattingScalar,
   ConditionalFormattingTone,
   TableConditionalFormattingRule,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 
 export interface ConditionalFormattingMatch {
   tone: ConditionalFormattingTone;

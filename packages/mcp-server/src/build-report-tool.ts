@@ -1,5 +1,5 @@
-import type { ReportSpec } from "@reporting/core";
-import { validateReportSpec, type ValidationContext } from "@reporting/core";
+import type { ReportSpec } from "@prism-reporting/core";
+import { validateReportSpec, type ValidationContext } from "@prism-reporting/core";
 import { z } from "zod";
 
 export { buildValidationContext } from "./contract.js";

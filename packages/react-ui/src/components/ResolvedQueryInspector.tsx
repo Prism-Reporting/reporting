@@ -3,7 +3,7 @@ import type {
   ConditionalFormattingCondition,
   TableConditionalFormattingRule,
   ResolvedQueryExecution,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 
 function formatParamValue(value: unknown): string {
   if (value === undefined) return "";

@@ -5,14 +5,14 @@ import type {
   DataProvider,
   ResolvedQueryExecution,
   FilterSpec,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 import {
   resolveReport,
   getWidgetGroupIds,
   filterAppliesToGroupIds,
   buildParamsForDataSource,
-} from "@reporting/core";
-import type { ComponentRegistry, ResolvedReport } from "@reporting/core";
+} from "@prism-reporting/core";
+import type { ComponentRegistry, ResolvedReport } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 
 const DEFAULT_PAGE_SIZE = 20;

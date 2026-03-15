@@ -1,8 +1,8 @@
-# @reporting/mcp-server
+# @prism-reporting/mcp-server
 
 ## Beta status
 
-`@reporting/mcp-server` is currently in beta and is still evolving quickly.
+`@prism-reporting/mcp-server` is currently in beta and is still evolving quickly.
 
 - Breaking changes may happen during this phase.
 - The MCP surface should be treated as an early integration layer, not a long-term stable contract yet.
@@ -11,7 +11,7 @@
 MCP server that exposes tools for Prism Reporting:
 
 - **Resources** — Versioned ReportSpec guide, schema, examples, changelog, query catalog, and semantic grounding context.
-- **validate_report_spec** — Validate a ReportSpec object with `@reporting/core`.
+- **validate_report_spec** — Validate a ReportSpec object with `@prism-reporting/core`.
 - **list_supported_widgets** — Discover the widget primitives supported by the DSL.
 - **list_supported_filters** — Discover the filter primitives supported by the DSL.
 - **get_report_spec_example** — Fetch a valid example for a common pattern.
@@ -21,7 +21,7 @@ MCP server that exposes tools for Prism Reporting:
 ## Prerequisites
 
 - Node.js >= 18
-- Built `@reporting/core` (from repo root: `npm run build`).
+- Built `@prism-reporting/core` (from repo root: `npm run build`).
 
 ## Setup
 
@@ -80,8 +80,8 @@ The server publishes versioned resources under `report-spec://v1/...`:
 When creating the MCP server you can pass an optional **policy** so `validate_report_spec` enforces host rules (e.g. max widgets, allowed query names). Pass a third argument to `createReportingMcpServer`:
 
 ```ts
-import { createReportingMcpServer } from "@reporting/mcp-server";
-import type { ReportSpec, PolicyResult } from "@reporting/core";
+import { createReportingMcpServer } from "@prism-reporting/mcp-server";
+import type { ReportSpec, PolicyResult } from "@prism-reporting/core";
 
 const policy = (spec: ReportSpec): PolicyResult => {
   const errors: { code: string; message: string }[] = [];
@@ -98,13 +98,13 @@ Policy errors are merged into the validation diagnostics and set `valid: false` 
 
 ## Session Host Context
 
-Query metadata is session-scoped. The **preferred integration** is to pass a **reporting context provider** (`ReportingContextProvider` from `@reporting/core`) when creating the session manager or standalone server. The MCP layer then obtains base context (and optional semantic context) from the provider for each new session and uses it for the query catalog resource, `list_available_queries`, `describe_query`, and validation defaults for `validate_report_spec`. Validation rules are driven by **base context only**; semantic context is for agent grounding and does not change validation.
+Query metadata is session-scoped. The **preferred integration** is to pass a **reporting context provider** (`ReportingContextProvider` from `@prism-reporting/core`) when creating the session manager or standalone server. The MCP layer then obtains base context (and optional semantic context) from the provider for each new session and uses it for the query catalog resource, `list_available_queries`, `describe_query`, and validation defaults for `validate_report_spec`. Validation rules are driven by **base context only**; semantic context is for agent grounding and does not change validation.
 
 **Preferred (context provider):**
 
 ```ts
-import { createReportingMcpSessionManager } from "@reporting/mcp-server";
-import type { ReportingContextProvider } from "@reporting/core";
+import { createReportingMcpSessionManager } from "@prism-reporting/mcp-server";
+import type { ReportingContextProvider } from "@prism-reporting/core";
 
 const provider: ReportingContextProvider = {
   getBaseContext: async () => ({ source: "my-app", queries: [...] }),
@@ -117,7 +117,7 @@ const sessionManager = createReportingMcpSessionManager({
 });
 ```
 
-**Legacy / fallback:** The `x-reporting-host-context` header is **deprecated**. It is only used when no context provider is supplied (or when the provider fails). **Migration:** Implement a `ReportingContextProvider` (from `@reporting/core`) that returns the same base—and optional semantic—context you previously sent in the header, and pass it as `contextProvider` to `createReportingMcpSessionManager` or `startStandaloneReportingMcpHttpServer`.
+**Legacy / fallback:** The `x-reporting-host-context` header is **deprecated**. It is only used when no context provider is supplied (or when the provider fails). **Migration:** Implement a `ReportingContextProvider` (from `@prism-reporting/core`) that returns the same base—and optional semantic—context you previously sent in the header, and pass it as `contextProvider` to `createReportingMcpSessionManager` or `startStandaloneReportingMcpHttpServer`.
 
 Expected header shape (legacy):
 

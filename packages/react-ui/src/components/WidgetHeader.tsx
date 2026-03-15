@@ -3,7 +3,7 @@ import type {
   CardConditionalFormattingRule,
   ResolvedQueryExecution,
   TableConditionalFormattingRule,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 import { ResolvedQueryInspector } from "./ResolvedQueryInspector.js";
 
 export interface WidgetHeaderProps {

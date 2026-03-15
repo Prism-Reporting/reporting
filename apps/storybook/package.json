@@ -1,5 +1,5 @@
 {
-  "name": "@reporting/storybook",
+  "name": "@prism-reporting/storybook",
   "version": "0.1.0",
   "description": "Storybook workspace for developing and previewing Prism Reporting UI components.",
   "private": true,
@@ -30,8 +30,8 @@
     "ui"
   ],
   "dependencies": {
-    "@reporting/core": "workspace:*",
-    "@reporting/react-ui": "workspace:*",
+    "@prism-reporting/core": "workspace:*",
+    "@prism-reporting/react-ui": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.10.0"

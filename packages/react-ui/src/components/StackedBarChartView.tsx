@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { StackedBarChartProps } from "@reporting/core";
+import type { StackedBarChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { ChartLegend } from "./ChartLegend.js";
 

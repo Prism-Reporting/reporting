@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import type { BarChartProps } from "@reporting/core";
+import type { BarChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 
 const COLORS = [

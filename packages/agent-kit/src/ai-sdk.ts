@@ -1,5 +1,5 @@
 import { jsonSchema, stepCountIs, streamText, tool } from "ai";
-import type { DataProvider, ReportingContextProvider } from "@reporting/core";
+import type { DataProvider, ReportingContextProvider } from "@prism-reporting/core";
 import { createReportingAgentRuntime, type ReportingAgentRuntime } from "./runtime.js";
 import { createReportingAgentTools } from "./tools.js";
 

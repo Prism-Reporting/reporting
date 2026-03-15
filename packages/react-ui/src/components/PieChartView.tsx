@@ -5,7 +5,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { DoughnutChartProps, PieChartProps } from "@reporting/core";
+import type { DoughnutChartProps, PieChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { ChartLegend } from "./ChartLegend.js";
 

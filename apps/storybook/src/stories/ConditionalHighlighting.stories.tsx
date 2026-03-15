@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import type { DataProvider, ReportSpec } from "@reporting/core";
-import { ReportRenderer, defaultRegistry } from "@reporting/react-ui";
+import type { DataProvider, ReportSpec } from "@prism-reporting/core";
+import { ReportRenderer, defaultRegistry } from "@prism-reporting/react-ui";
 import { reportStoryParameters, withReportFrame } from "../story-support/frames";
 
 const INITIATIVE_ROWS = [

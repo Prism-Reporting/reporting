@@ -10,11 +10,11 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "paths": {
-      "@reporting/core": ["packages/core/dist/index.d.ts"],
-      "@reporting/agent-kit": ["packages/agent-kit/dist/index.d.ts"],
-      "@reporting/react-ui": ["packages/react-ui/dist/index.d.ts"],
-      "@reporting/mcp-server": ["packages/mcp-server/dist/index.d.ts"],
-      "@reporting/mcp-server/*": ["packages/mcp-server/dist/*"]
+      "@prism-reporting/core": ["packages/core/dist/index.d.ts"],
+      "@prism-reporting/agent-kit": ["packages/agent-kit/dist/index.d.ts"],
+      "@prism-reporting/react-ui": ["packages/react-ui/dist/index.d.ts"],
+      "@prism-reporting/mcp-server": ["packages/mcp-server/dist/index.d.ts"],
+      "@prism-reporting/mcp-server/*": ["packages/mcp-server/dist/*"]
     },
     "declaration": true,
     "declarationMap": true,

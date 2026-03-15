@@ -33,7 +33,7 @@ body:
     id: area
     attributes:
       label: Package or area
-      description: Example: @reporting/core, @reporting/mcp-server, docs, Storybook
+      description: Example: @prism-reporting/core, @prism-reporting/mcp-server, docs, Storybook
     validations:
       required: true
   - type: textarea

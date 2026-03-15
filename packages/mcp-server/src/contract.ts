@@ -5,7 +5,7 @@ import {
   type QueryCatalogEntry,
   type SemanticReportingContext,
   type ValidationContext,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 
 export type { BaseReportingContext, QueryCatalogEntry, SemanticReportingContext };
 

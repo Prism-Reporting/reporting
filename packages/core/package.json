@@ -1,5 +1,5 @@
 {
-  "name": "@reporting/core",
+  "name": "@prism-reporting/core",
   "version": "0.1.0-beta.0",
   "description": "Core ReportSpec types, validation, resolution, and reporting context contracts.",
   "type": "module",

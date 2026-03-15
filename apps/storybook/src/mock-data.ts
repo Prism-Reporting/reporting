@@ -1,4 +1,4 @@
-import type { DataProvider } from "@reporting/core";
+import type { DataProvider } from "@prism-reporting/core";
 
 const TASKS = [
   { id: "1", name: "Design review", status: "In Progress", assignee: "Alice", dueDate: "2025-03-05" },

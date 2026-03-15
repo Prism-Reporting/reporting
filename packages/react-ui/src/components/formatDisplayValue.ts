@@ -1,4 +1,4 @@
-import type { ValueFormat } from "@reporting/core";
+import type { ValueFormat } from "@prism-reporting/core";
 
 export function formatMetricValue(
   value: number | string,

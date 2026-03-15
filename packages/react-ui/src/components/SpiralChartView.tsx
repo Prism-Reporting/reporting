@@ -1,4 +1,4 @@
-import type { SpiralChartProps } from "@reporting/core";
+import type { SpiralChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { ChartLegend } from "./ChartLegend.js";
 

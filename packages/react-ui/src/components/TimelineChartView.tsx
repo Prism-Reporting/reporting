@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { TimelineChartProps } from "@reporting/core";
+import type { TimelineChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;

@@ -7,7 +7,7 @@ import { createReportingAgentRuntime } from "../dist/runtime.js";
 import { createReportingAgentTools } from "../dist/tools.js";
 import { generateReportAgentSkill } from "../dist/skills.js";
 
-describe("@reporting/agent-kit", () => {
+describe("@prism-reporting/agent-kit", () => {
   let tempDir = "";
 
   before(async () => {

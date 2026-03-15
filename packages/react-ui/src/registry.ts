@@ -1,4 +1,4 @@
-import type { ComponentRegistry } from "@reporting/core";
+import type { ComponentRegistry } from "@prism-reporting/core";
 import { TableWidgetView } from "./components/TableWidgetView.js";
 import { CardView } from "./components/CardView.js";
 import { BarChartView } from "./components/BarChartView.js";

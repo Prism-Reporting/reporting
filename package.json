@@ -25,12 +25,12 @@
     "storybook"
   ],
   "scripts": {
-    "build": "pnpm --filter @reporting/core build && pnpm --filter @reporting/react-ui build && pnpm --filter @reporting/mcp-server build && pnpm --filter @reporting/agent-kit build",
-    "test": "pnpm --filter @reporting/core test && pnpm --filter @reporting/mcp-server test && pnpm --filter @reporting/agent-kit test",
+    "build": "pnpm --filter @prism-reporting/core build && pnpm --filter @prism-reporting/react-ui build && pnpm --filter @prism-reporting/mcp-server build && pnpm --filter @prism-reporting/agent-kit build",
+    "test": "pnpm --filter @prism-reporting/core test && pnpm --filter @prism-reporting/mcp-server test && pnpm --filter @prism-reporting/agent-kit test",
     "ci": "pnpm run build && pnpm run test",
     "prepare": "sh scripts/setup-githooks.sh",
-    "dev": "pnpm --filter @reporting/storybook storybook",
-    "storybook": "pnpm --filter @reporting/storybook storybook"
+    "dev": "pnpm --filter @prism-reporting/storybook storybook",
+    "storybook": "pnpm --filter @prism-reporting/storybook storybook"
   },
   "devDependencies": {
     "typescript": "^5.3.3"

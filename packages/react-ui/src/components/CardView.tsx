@@ -1,4 +1,4 @@
-import type { CardViewProps } from "@reporting/core";
+import type { CardViewProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { formatMetricValue, stringifyDisplayValue } from "./formatDisplayValue.js";
 import { getCardConditionalFormatting } from "./conditionalFormatting.js";

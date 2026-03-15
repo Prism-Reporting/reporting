@@ -11,7 +11,7 @@ import {
   type ReportingContextProvider,
   type ReportSpec,
   type RunQueryResult,
-} from "@reporting/core";
+} from "@prism-reporting/core";
 import { buildValidationContextFromBaseContext } from "./runtime.js";
 
 export interface ReportingAgentToolsOptions {

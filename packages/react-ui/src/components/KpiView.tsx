@@ -6,7 +6,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import type { KpiProps } from "@reporting/core";
+import type { KpiProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 import { formatMetricValue } from "./formatDisplayValue.js";
 

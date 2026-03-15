@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import type { CardViewProps } from "@reporting/core";
-import { CardView } from "@reporting/react-ui";
+import type { CardViewProps } from "@prism-reporting/core";
+import { CardView } from "@prism-reporting/react-ui";
 import {
   componentStoryParameters,
   withComponentFrame,

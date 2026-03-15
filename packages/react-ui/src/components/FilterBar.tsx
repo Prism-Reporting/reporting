@@ -1,5 +1,5 @@
-import type { FilterBarProps } from "@reporting/core";
-import type { FilterSpec } from "@reporting/core";
+import type { FilterBarProps } from "@prism-reporting/core";
+import type { FilterSpec } from "@prism-reporting/core";
 
 function SelectFilterControl({
   filter,

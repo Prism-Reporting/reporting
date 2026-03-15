@@ -5,7 +5,7 @@ import {
   ResponsiveContainer,
   LabelList,
 } from "recharts";
-import type { FunnelChartProps } from "@reporting/core";
+import type { FunnelChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 
 export function FunnelChartView({

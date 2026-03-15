@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { ScatterChartProps } from "@reporting/core";
+import type { ScatterChartProps } from "@prism-reporting/core";
 import { WidgetHeader } from "./WidgetHeader.js";
 
 export function ScatterChartView({
