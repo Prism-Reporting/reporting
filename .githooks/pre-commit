@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+set -eu
+
+echo "Running pre-commit test suite..."
+
+if command -v pnpm >/dev/null 2>&1; then
+  pnpm test
+  exit 0
+fi
+
+npm exec --yes pnpm test

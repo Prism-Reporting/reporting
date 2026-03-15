@@ -28,6 +28,7 @@
     "build": "pnpm --filter @reporting/core build && pnpm --filter @reporting/react-ui build && pnpm --filter @reporting/mcp-server build && pnpm --filter @reporting/agent-kit build",
     "test": "pnpm --filter @reporting/core test && pnpm --filter @reporting/mcp-server test && pnpm --filter @reporting/agent-kit test",
     "ci": "pnpm run build && pnpm run test",
+    "prepare": "sh scripts/setup-githooks.sh",
     "dev": "pnpm --filter @reporting/storybook storybook",
     "storybook": "pnpm --filter @reporting/storybook storybook"
   },
