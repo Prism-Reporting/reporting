@@ -55,10 +55,10 @@ importers:
   packages/agent-kit:
     dependencies:
       '@reporting/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@reporting/mcp-server':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../mcp-server
       ai:
         specifier: ^5.0.0
@@ -90,7 +90,7 @@ importers:
         specifier: ^1.0.0
         version: 1.27.1(zod@3.25.76)
       '@reporting/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       zod:
         specifier: ^3.23.0
@@ -106,7 +106,7 @@ importers:
   packages/react-ui:
     dependencies:
       '@reporting/core':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       recharts:
         specifier: ^2.10.0
