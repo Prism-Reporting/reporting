@@ -20,8 +20,8 @@ Generate a **ReportSpec** (JSON) from a natural language description. The output
   - **search**: `type: "search"`, optional `groupIds`, `paramKey`, `placeholder`, `required`, `defaultValue`.
   - **numericRange**: `type: "numericRange"`, optional `groupIds`, `min`, `max`, `step`, `paramKeyFrom`, `paramKeyTo`, `required`, `defaultValue`.
 - **widgets** (array): One or more widget specs. Each has `type`, `id`, `dataSource`, optional `title`, and `config`:
-  - **table**: `type: "table"`, `config: { columns?, groupByKey?, groupLabelKey?, summary?, aggregations?, groupAggregations?, groupSummaryLabel?, grandTotalLabel?, sort?, drillDown? }`. Use `groupByKey` for grouped raw tables, `summary` for derived summary rows, and `groupAggregations` for per-group subtotals.
-  - **cardView**: `type: "cardView"`, `config: { titleKey, subtitleKey?, badges?, metadata?, primaryMetric?, template?, emptyStateText? }`.
+  - **table**: `type: "table"`, `config: { columns?, groupByKey?, groupLabelKey?, summary?, aggregations?, groupAggregations?, groupSummaryLabel?, grandTotalLabel?, sort?, drillDown?, conditionalFormatting? }`. Use `groupByKey` for grouped raw tables, `summary` for derived summary rows, and `groupAggregations` for per-group subtotals. `conditionalFormatting` supports row or cell highlighting rules.
+  - **cardView**: `type: "cardView"`, `config: { titleKey, subtitleKey?, badges?, metadata?, primaryMetric?, template?, emptyStateText?, conditionalFormatting? }`. `conditionalFormatting` supports card highlighting rules.
   - **barChart**: `type: "barChart"`, `config: { categoryKey, valueKey, series? }`.
   - **lineChart**: `type: "lineChart"`, `config: { categoryKey, valueKey, series? }`.
   - **areaChart**: `type: "areaChart"`, `config: { categoryKey, valueKey, series? }`.
@@ -108,6 +108,7 @@ All `dataSource` values in filters and widgets must reference a key from `dataSo
 - Use `groupIds` when filters should only affect one area of a report. If every widget should respond, omit `groupIds`.
 - For grouped tables, use `groupByKey` plus `groupLabelKey` when the display label differs from the raw grouping key.
 - When building tabs or sections, define all widgets in `widgets` first, then reference those same ids from `tabs[].widgetIds` or `sections[].widgetIds`.
+- Use `conditionalFormatting` when the request asks to highlight rows, cells, or cards based on field values. Table rules use `target.type` of `"row"` or `"cell"`; card rules use `"card"`. Conditions support `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `between`, and `in`, and tones support `danger`, `warning`, `success`, `info`, and `neutral`.
 
 ## More examples
 

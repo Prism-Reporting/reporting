@@ -2,29 +2,20 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Build: @reporting/core",
+      "name": "Build: Watch packages",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "build", "-w", "@reporting/core"],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Build: @reporting/core (watch)",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "build:watch", "-w", "@reporting/core"],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal"
-    },
-    {
-      "name": "Build: @reporting/react-ui (watch)",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "build:watch", "-w", "@reporting/react-ui"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@reporting/core",
+        "--filter",
+        "@reporting/react-ui",
+        "--filter",
+        "@reporting/mcp-server",
+        "run",
+        "build:watch"
+      ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
     },
@@ -32,24 +23,10 @@
       "name": "Storybook: Start dev server",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "storybook"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["storybook"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal"
-    },
-    {
-      "name": "Storybook: Open in Chrome",
-      "type": "chrome",
-      "request": "launch",
-      "url": "http://localhost:6006",
-      "webRoot": "${workspaceFolder}/apps/storybook"
-    },
-    {
-      "name": "Storybook: Attach to Chrome",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9222,
-      "webRoot": "${workspaceFolder}/apps/storybook"
     },
     {
       "name": "MCP Server",
@@ -60,13 +37,6 @@
       "console": "integratedTerminal",
       "envFile": "${workspaceFolder}/packages/mcp-server/.env",
       "preLaunchTask": "build-mcp-server"
-    }
-  ],
-  "compounds": [
-    {
-      "name": "Storybook: Server + Chrome",
-      "configurations": ["Storybook: Start dev server", "Storybook: Open in Chrome"],
-      "stopAll": true
     }
   ]
 }

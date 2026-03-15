@@ -3,14 +3,14 @@
   "private": true,
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "build": "npm run build -w @reporting/core && npm run build -w @reporting/react-ui && npm run build -w @reporting/mcp-server",
-    "dev": "npm run storybook -w @reporting/storybook",
-    "storybook": "npm run storybook -w @reporting/storybook"
+    "build": "pnpm --filter @reporting/core build && pnpm --filter @reporting/react-ui build && pnpm --filter @reporting/mcp-server build",
+    "dev": "pnpm --filter @reporting/storybook storybook",
+    "storybook": "pnpm --filter @reporting/storybook storybook"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   }
 }

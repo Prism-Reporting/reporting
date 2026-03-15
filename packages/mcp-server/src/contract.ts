@@ -81,7 +81,7 @@ export const supportedFilters = [
 export const supportedWidgets = [
   {
     type: "table",
-    description: "Tabular widget for raw rows or grouped summary rows. Provide config.columns for raw tables, or config.summary to derive grouped/object summaries. Optional groupByKey, groupLabelKey, aggregations, groupAggregations, sort, and drillDown. Supports grouped subtotals plus grand-total labeling.",
+    description: "Tabular widget for raw rows or grouped summary rows. Provide config.columns for raw tables, or config.summary to derive grouped/object summaries. Optional groupByKey, groupLabelKey, aggregations, groupAggregations, sort, drillDown, and conditionalFormatting for row/cell highlighting. Supports grouped subtotals plus grand-total labeling.",
     requiredFields: ["type", "id", "dataSource", "config.columns or config.summary"],
     optionalFields: [
       "title",
@@ -97,11 +97,12 @@ export const supportedWidgets = [
       "config.grandTotalLabel",
       "config.sort",
       "config.drillDown",
+      "config.conditionalFormatting",
     ],
   },
   {
     type: "cardView",
-    description: "Record-browsing widget rendered as responsive cards. Configure titleKey, optional subtitleKey, badges, metadata rows, and an optional primaryMetric with compact or detailed templates.",
+    description: "Record-browsing widget rendered as responsive cards. Configure titleKey, optional subtitleKey, badges, metadata rows, an optional primaryMetric with compact or detailed templates, and conditionalFormatting for card highlighting.",
     requiredFields: ["type", "id", "dataSource", "config.titleKey"],
     optionalFields: [
       "title",
@@ -114,6 +115,7 @@ export const supportedWidgets = [
       "config.primaryMetric",
       "config.template",
       "config.emptyStateText",
+      "config.conditionalFormatting",
     ],
   },
   {
@@ -275,8 +277,8 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 
 | Type        | Required fields                           | Optional fields                                      |
 |------------|-------------------------------------------|------------------------------------------------------|
-| \`table\`    | \`type\`, \`id\`, \`dataSource\`, \`config.columns\` or \`config.summary\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.groupByKey\`, \`config.groupLabelKey\`, \`config.summary\`, \`config.aggregations\`, \`config.groupAggregations\`, \`config.groupSummaryLabel\`, \`config.grandTotalLabel\`, \`config.sort\`, \`config.drillDown\` |
-| \`cardView\` | \`type\`, \`id\`, \`dataSource\`, \`config.titleKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.subtitleKey\`, \`config.badges\`, \`config.metadata\`, \`config.primaryMetric\`, \`config.template\`, \`config.emptyStateText\` |
+| \`table\`    | \`type\`, \`id\`, \`dataSource\`, \`config.columns\` or \`config.summary\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.groupByKey\`, \`config.groupLabelKey\`, \`config.summary\`, \`config.aggregations\`, \`config.groupAggregations\`, \`config.groupSummaryLabel\`, \`config.grandTotalLabel\`, \`config.sort\`, \`config.drillDown\`, \`config.conditionalFormatting\` |
+| \`cardView\` | \`type\`, \`id\`, \`dataSource\`, \`config.titleKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.subtitleKey\`, \`config.badges\`, \`config.metadata\`, \`config.primaryMetric\`, \`config.template\`, \`config.emptyStateText\`, \`config.conditionalFormatting\` |
 | \`barChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.series\`                          |
 | \`stackedBarChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.series\` | \`title\`, \`groupIds\`, \`width\`, \`height\` |
 | \`lineChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.categoryKey\`, \`config.valueKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.series\` (multiple lines)       |
@@ -291,8 +293,8 @@ Each widget must have a **unique string \`id\`**, \`type\`, \`dataSource\`, and 
 | \`ganttChart\` | \`type\`, \`id\`, \`dataSource\`, \`config.startDateKey\`, \`config.endDateKey\`, \`config.labelKey\` | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.groupKey\`, \`config.statusKey\` |
 | \`kpi\`      | \`type\`, \`id\`, \`dataSource\`, \`config.valueKey\`  | \`title\`, \`groupIds\`, \`width\`, \`height\`, \`config.label\`, \`config.aggregation\`, \`config.format\`, \`config.currencyCode\`, \`config.decimalPlaces\`, \`config.prefix\`, \`config.suffix\`, \`config.trend\` |
 
-- **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`) for raw row tables. \`config.summary\` is an optional array of \`{ key, op }\` where \`op\` is one of \`sum | avg | min | max | count | latest | earliest | distinct\`; when present, the engine derives one summary row across the whole dataset or one summary row per \`groupByKey\`. If \`config.columns\` is omitted in summary mode, columns are derived automatically. Use \`groupByKey\` to group raw rows or to build grouped summary rows; \`groupLabelKey\` sets the section/header label or alternate group field. \`config.aggregations\` adds a grand-total footer row. \`config.groupAggregations\` adds per-group subtotal rows and requires \`groupByKey\`. Optional \`groupSummaryLabel\` and \`grandTotalLabel\` customize those row labels. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default). Summary tables and grouped subtotal tables should use full-result delivery rather than paginatedList so reducers see the complete filtered dataset.
-- **cardView**: renders each row as a card. \`config.titleKey\` is required. Optional \`subtitleKey\`, \`badges\`, and \`metadata\` are arrays of \`{ key, label? }\` bound to row fields. Optional \`primaryMetric\` is \`{ key, label?, format?, currencyCode?, decimalPlaces?, prefix?, suffix? }\` and uses the same formatting options as KPIs. Optional \`template\` is \`"compact"\` or \`"detailed"\`; omit to use \`"detailed"\`. Optional \`emptyStateText\` customizes the no-results message. \`cardView\` can use paginatedList delivery for record browsing or fullVisual for full result grids.
+- **table**: \`config.columns\` is an array of \`{ key, label, type? }\` (type: \`string\`, \`number\`, \`date\`) for raw row tables. \`config.summary\` is an optional array of \`{ key, op }\` where \`op\` is one of \`sum | avg | min | max | count | latest | earliest | distinct\`; when present, the engine derives one summary row across the whole dataset or one summary row per \`groupByKey\`. If \`config.columns\` is omitted in summary mode, columns are derived automatically. Use \`groupByKey\` to group raw rows or to build grouped summary rows; \`groupLabelKey\` sets the section/header label or alternate group field. \`config.aggregations\` adds a grand-total footer row. \`config.groupAggregations\` adds per-group subtotal rows and requires \`groupByKey\`. Optional \`groupSummaryLabel\` and \`grandTotalLabel\` customize those row labels. \`config.sort\` is optional. \`config.drillDown\` is optional: \`{ urlTemplate: string, paramKeys?: string[], target?: "_self" | "_blank" }\`; placeholders in urlTemplate (e.g. \`{id}\`) are replaced by row values (paramKeys list which row keys map to placeholders). Clicking a row opens the URL (_blank by default). Optional \`config.conditionalFormatting\` is an array of highlight rules for rows or individual cells using tones \`danger | warning | success | info | neutral\`. Table rules use \`target: { type: "row" }\` or \`target: { type: "cell", columnKey: string }\` plus a \`when\` condition such as \`{ field, op: "eq", value }\`, \`{ field, op: "between", min, max }\`, or \`{ field, op: "in", values }\`. Summary tables and grouped subtotal tables should use full-result delivery rather than paginatedList so reducers see the complete filtered dataset.
+- **cardView**: renders each row as a card. \`config.titleKey\` is required. Optional \`subtitleKey\`, \`badges\`, and \`metadata\` are arrays of \`{ key, label? }\` bound to row fields. Optional \`primaryMetric\` is \`{ key, label?, format?, currencyCode?, decimalPlaces?, prefix?, suffix? }\` and uses the same formatting options as KPIs. Optional \`template\` is \`"compact"\` or \`"detailed"\`; omit to use \`"detailed"\`. Optional \`emptyStateText\` customizes the no-results message. Optional \`config.conditionalFormatting\` is an array of highlight rules with \`target: { type: "card" }\`, a \`when\` condition, and a \`tone\` (\`danger | warning | success | info | neutral\`). \`cardView\` can use paginatedList delivery for record browsing or fullVisual for full result grids.
 - **barChart**: \`categoryKey\` and \`valueKey\` are field keys from the query result.
 - **stackedBarChart**: \`config.categoryKey\` for x-axis; \`config.series\` is an array of \`{ key, label? }\` (one stack segment per series key).
 - **lineChart**: \`categoryKey\` (x-axis) and \`valueKey\` (y-axis); data is ordered by category. Optional \`config.series\` for multiple lines (\`{ key, label }\` per series).
@@ -916,6 +918,134 @@ const reportSpecJsonSchema = {
                       },
                     },
                   },
+                  conditionalFormatting: {
+                    type: "array",
+                    description: "Optional conditional highlighting rules for rows or cells.",
+                    minItems: 1,
+                    items: {
+                      oneOf: [
+                        {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["target", "when", "tone"],
+                          properties: {
+                            target: {
+                              type: "object",
+                              additionalProperties: false,
+                              required: ["type"],
+                              properties: {
+                                type: { const: "row" },
+                              },
+                            },
+                            when: {
+                              oneOf: [
+                                {
+                                  type: "object",
+                                  additionalProperties: false,
+                                  required: ["field", "op", "value"],
+                                  properties: {
+                                    field: { type: "string" },
+                                    op: { type: "string", enum: ["gt", "gte", "lt", "lte", "eq", "neq"] },
+                                    value: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                  },
+                                },
+                                {
+                                  type: "object",
+                                  additionalProperties: false,
+                                  required: ["field", "op", "min", "max"],
+                                  properties: {
+                                    field: { type: "string" },
+                                    op: { const: "between" },
+                                    min: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                    max: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                  },
+                                },
+                                {
+                                  type: "object",
+                                  additionalProperties: false,
+                                  required: ["field", "op", "values"],
+                                  properties: {
+                                    field: { type: "string" },
+                                    op: { const: "in" },
+                                    values: {
+                                      type: "array",
+                                      minItems: 1,
+                                      items: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                    },
+                                  },
+                                },
+                              ],
+                            },
+                            tone: {
+                              type: "string",
+                              enum: ["danger", "warning", "success", "info", "neutral"],
+                            },
+                            label: { type: "string" },
+                          },
+                        },
+                        {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["target", "when", "tone"],
+                          properties: {
+                            target: {
+                              type: "object",
+                              additionalProperties: false,
+                              required: ["type", "columnKey"],
+                              properties: {
+                                type: { const: "cell" },
+                                columnKey: { type: "string" },
+                              },
+                            },
+                            when: {
+                              oneOf: [
+                                {
+                                  type: "object",
+                                  additionalProperties: false,
+                                  required: ["field", "op", "value"],
+                                  properties: {
+                                    field: { type: "string" },
+                                    op: { type: "string", enum: ["gt", "gte", "lt", "lte", "eq", "neq"] },
+                                    value: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                  },
+                                },
+                                {
+                                  type: "object",
+                                  additionalProperties: false,
+                                  required: ["field", "op", "min", "max"],
+                                  properties: {
+                                    field: { type: "string" },
+                                    op: { const: "between" },
+                                    min: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                    max: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                  },
+                                },
+                                {
+                                  type: "object",
+                                  additionalProperties: false,
+                                  required: ["field", "op", "values"],
+                                  properties: {
+                                    field: { type: "string" },
+                                    op: { const: "in" },
+                                    values: {
+                                      type: "array",
+                                      minItems: 1,
+                                      items: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                    },
+                                  },
+                                },
+                              ],
+                            },
+                            tone: {
+                              type: "string",
+                              enum: ["danger", "warning", "success", "info", "neutral"],
+                            },
+                            label: { type: "string" },
+                          },
+                        },
+                      ],
+                    },
+                  },
                 },
               },
             },
@@ -990,6 +1120,70 @@ const reportSpecJsonSchema = {
                   emptyStateText: {
                     type: "string",
                     description: "Optional message shown when no rows are returned.",
+                  },
+                  conditionalFormatting: {
+                    type: "array",
+                    description: "Optional conditional highlighting rules for cards.",
+                    minItems: 1,
+                    items: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["target", "when", "tone"],
+                      properties: {
+                        target: {
+                          type: "object",
+                          additionalProperties: false,
+                          required: ["type"],
+                          properties: {
+                            type: { const: "card" },
+                          },
+                        },
+                        when: {
+                          oneOf: [
+                            {
+                              type: "object",
+                              additionalProperties: false,
+                              required: ["field", "op", "value"],
+                              properties: {
+                                field: { type: "string" },
+                                op: { type: "string", enum: ["gt", "gte", "lt", "lte", "eq", "neq"] },
+                                value: { oneOf: [{ type: "string" }, { type: "number" }] },
+                              },
+                            },
+                            {
+                              type: "object",
+                              additionalProperties: false,
+                              required: ["field", "op", "min", "max"],
+                              properties: {
+                                field: { type: "string" },
+                                op: { const: "between" },
+                                min: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                max: { oneOf: [{ type: "string" }, { type: "number" }] },
+                              },
+                            },
+                            {
+                              type: "object",
+                              additionalProperties: false,
+                              required: ["field", "op", "values"],
+                              properties: {
+                                field: { type: "string" },
+                                op: { const: "in" },
+                                values: {
+                                  type: "array",
+                                  minItems: 1,
+                                  items: { oneOf: [{ type: "string" }, { type: "number" }] },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                        tone: {
+                          type: "string",
+                          enum: ["danger", "warning", "success", "info", "neutral"],
+                        },
+                        label: { type: "string" },
+                      },
+                    },
                   },
                 },
               },
@@ -1802,6 +1996,70 @@ const exampleTimeline = {
   ],
 };
 
+const exampleConditionalFormatting = {
+  id: "initiative-health-highlighting",
+  title: "Initiative Health Highlighting",
+  layout: "singleColumn",
+  dataSources: {
+    initiatives: {
+      name: "initiatives",
+      query: "initiatives",
+      delivery: {
+        mode: "fullVisual",
+        maxRows: 500,
+      },
+    },
+  },
+  filters: [],
+  widgets: [
+    {
+      type: "table",
+      id: "initiative-health-table",
+      title: "Initiatives",
+      dataSource: "initiatives",
+      config: {
+        columns: [
+          { key: "name", label: "Initiative" },
+          { key: "health", label: "Health" },
+          { key: "budgetVariance", label: "Budget Variance", type: "number" },
+        ],
+        conditionalFormatting: [
+          {
+            target: { type: "row" },
+            when: { field: "health", op: "eq", value: "At Risk" },
+            tone: "danger",
+            label: "At risk initiative",
+          },
+          {
+            target: { type: "cell", columnKey: "budgetVariance" },
+            when: { field: "budgetVariance", op: "gt", value: 0 },
+            tone: "warning",
+            label: "Over budget",
+          },
+        ],
+      },
+    },
+    {
+      type: "cardView",
+      id: "initiative-health-cards",
+      title: "Initiative cards",
+      dataSource: "initiatives",
+      config: {
+        titleKey: "name",
+        badges: [{ key: "health", label: "Health" }],
+        conditionalFormatting: [
+          {
+            target: { type: "card" },
+            when: { field: "health", op: "in", values: ["At Risk", "Blocked"] },
+            tone: "danger",
+            label: "Needs attention",
+          },
+        ],
+      },
+    },
+  ],
+};
+
 const changelog = {
   version: REPORT_SPEC_VERSION,
   status: "initial-public-contract",
@@ -2086,6 +2344,14 @@ export function getStaticContractResources(): ContractResource[] {
       description: "Example using timelineView and ganttChart widgets with tabs.",
       mimeType: "application/json",
       text: JSON.stringify(exampleTimeline, null, 2),
+    },
+    {
+      name: "report-spec-example-conditional-formatting",
+      uri: `report-spec://${REPORT_SPEC_VERSION}/examples/patterns/conditional-formatting`,
+      title: "Conditional Formatting ReportSpec Example",
+      description: "Example using table row/cell highlighting and card highlighting.",
+      mimeType: "application/json",
+      text: JSON.stringify(exampleConditionalFormatting, null, 2),
     },
     {
       name: "report-spec-changelog",

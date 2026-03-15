@@ -8,6 +8,9 @@ describe("report generation rules", () => {
 
     assert.match(guide, /validate_report_spec/);
     assert.match(guide, /report-spec:\/\/v1\/guide/);
+    assert.match(guide, /conditionalFormatting/);
+    assert.match(guide, /row\/cell highlighting|rows or individual cells/);
+    assert.match(guide, /card highlighting/);
   });
 
   it("supports embedded apply-tool guidance for non-MCP hosts", () => {

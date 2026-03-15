@@ -169,5 +169,6 @@ export const Overview: Story = {
     spec: conditionalFormattingSpec,
     dataProvider: conditionalFormattingProvider,
     registry: defaultRegistry,
+    pageSize: 2
   },
 };

@@ -1,88 +1,208 @@
 # Reporting TODOs
 
-This document captures the next reporting capabilities that should be added after the current V1.2 foundation.
+This document captures the next reporting enhancements to prioritize.
+The goal is to turn the current high-level asks into implementation-ready guidance for the next iteration.
 
-## Newly implemented easy widgets
+## 1. External chart library support
 
-These are now low-friction options in the DSL and renderer:
+### Goal
 
-- `areaChart`
-- `pieChart`
-- `doughnutChart`
-- `funnelChart`
-- `scatterChart`
+Enable chart customization by supporting embeddable chart integrations from external libraries in addition to the current native chart components.
 
-## Newly implemented KPI enhancements
+### Problem to solve
 
-These are now supported for KPI widgets:
+Today the reporting system is primarily opinionated around native chart renderers. That works for built-in scenarios, but it limits teams that already use other charting ecosystems or need chart types, theming, interactions, and rendering behavior not covered by the native set.
 
-- Full-result-set aggregation via `config.aggregation` with `sum | avg | min | max | count`
-- Money and numeric formatting helpers including `currencyCode` and `decimalPlaces`
-- Display `prefix` / `suffix`
-- Validation that aggregation fields exist on the source query
-- Engine-side KPI aggregation without requiring a single pre-aggregated source row
+### Desired outcome  
 
-Notes:
+- A host application should be able to keep the reporting DSL/spec and engine contract, while swapping chart rendering to another chart library.
+- Integrators should be able to use either:
+  - the built-in/native chart renderers, or
+  - custom renderers backed by another chart library.
+- The integration should not require forking the core reporting packages.
 
-- `barChart`, `lineChart`, `stackedBarChart`, `table`, and `kpi` were already supported.
-- `stackedBarChart` already covers the common "stacked column chart" use case because it renders a vertical categorical stacked bar visualization.
+### Requirements
 
-## Newly implemented grouped raw summarization
+- Define an extension point for chart widgets at the component registry / renderer layer.
+- Make chart renderer resolution explicit so hosts can override per widget type.
+- Support partial override models:
+  - override one chart type only,
+  - override all chart types,
+  - mix native and custom chart implementations in the same report.
+- Preserve the current data contract for existing chart widgets unless there is a strong compatibility reason to evolve it.
+- Document the minimum renderer interface required for third-party chart adapters.
+- Make sure custom chart renderers can receive:
+  - normalized widget data,
+  - layout constraints,
+  - theme information,
+  - optional interaction callbacks if applicable.
 
-These are now supported for table widgets:
+### Design considerations
 
-- `config.summary` reducers with `sum | avg | min | max | count | latest | earliest | distinct`
-- Grouped summary rows via `config.groupByKey`
-- Date-aware `latest` / `earliest` reduction for fields like milestone completion dates
-- Summary-only tables that infer columns automatically when `config.columns` is omitted
+- Prefer adapter-style architecture over hard-coding a specific chart vendor.
+- Avoid coupling report specs directly to a particular chart library API.
+- Keep native renderers as the default path so existing consumers do not break.
+- Consider whether some widgets need a generic "customChart" escape hatch in addition to per-type overrides.
 
-Notes:
+### Open questions for implementation
 
-- Grouped summaries should use full-result delivery, not paginated table delivery, so reducers see the full filtered dataset.
-- `distinct` returns raw arrays in resolved data; the default table renderer displays them as comma-separated values.
+- Should external chart support be registry-only, spec-driven, or both?
+- Do we want vendor-specific adapters to live in the main repo or in separate packages?
+- Should theming tokens be passed as raw tokens, CSS variables, or a typed theme object?
+- Do we need event hooks for click, hover, select, drill-down, or brush/zoom behaviors?
 
-## Newly implemented card view
+### Suggested implementation breakdown
 
-These are now supported for record-browsing widgets:
+1. Audit the current chart rendering path and identify all hard-coded native assumptions.
+2. Define a stable chart renderer contract and registry override API.
+3. Refactor one or two chart types as a reference implementation for custom override support.
+4. Validate that native renderers still work unchanged.
+5. Add documentation and at least one example adapter using an external chart library.
 
-- `cardView` widget type
-- Config for `titleKey`, `subtitleKey`, `badges`, `metadata`, and `primaryMetric`
-- Optional `compact` and `detailed` card templates
-- Responsive wrapping/grid behavior with mobile-friendly stacking
-- Pagination support for card-based browsing on `paginatedList` data sources
+## 2. DLS customization and extensibility
 
-## Newly implemented timeline / Gantt chart
+### Goal
 
-These are now supported for schedule visualizations:
+Enable DLS customization so integrators can introduce capabilities such as reordering, editing, and contextual actions when needed. The goal is to make the DLS customizable and extension-ready, with component-level seams that are also easy to customize.
 
-- `timelineView` and `ganttChart` widget types
-- `startDateKey`, `endDateKey`, `labelKey`, `groupKey`, and `statusKey`
-- UTC-safe date normalization for date-only and timestamp inputs
-- Overlap lane assignment within groups for concurrent milestones
-- Dedicated renderer with long-label truncation and responsive stacking
+### Problem to solve
 
-## Newly implemented spiral chart
+The current DLS appears optimized for fixed/default behavior. Enterprise integrations often need richer interaction patterns, alternative component behavior, and domain-specific actions that cannot be anticipated in the base implementation.
 
-These are now supported for expressive ranked radial visualizations:
+### Desired outcome
 
-- `spiralChart` widget type
-- `categoryKey` / `valueKey` config matching other category-value charts
-- Dedicated spiral renderer with per-segment labels and legend support
+- Integrators should be able to extend the DLS without patching internal source code.
+- Custom behaviors should feel first-class rather than like fragile workarounds.
+- Component customization should be composable and discoverable.
 
-## Newly implemented bubble chart
+### Requirements
 
-These are now supported for dedicated bubble visualizations:
+- Identify the core DLS surfaces that should be customizable:
+  - layout containers,
+  - widget wrappers,
+  - tables/cards/charts,
+  - toolbar/actions areas,
+  - empty/loading/error states.
+- Introduce extension points for interactive capabilities such as:
+  - reordering,
+  - inline editing,
+  - contextual actions,
+  - custom menus,
+  - domain-specific affordances.
+- Support component replacement and component augmentation patterns.
+- Make customization possible at multiple levels:
+  - global/system-wide,
+  - report-level,
+  - widget-level where appropriate.
+- Provide a clear contract for passing custom props, handlers, and metadata into customized components.
+- Ensure the default experience remains simple for consumers that do not need customization.
 
-- `bubbleChart` widget type
-- Required `xKey`, `yKey`, and `zKey`
-- Optional `labelKey` for clearer tooltip labels
-- Optional `seriesKey` for grouped color legends
-- Dedicated renderer with normalized size scaling and bubble-size legend
+### Design considerations
 
-Some are now partially covered:
+- Keep the extension model predictable and typed.
+- Prefer explicit slots/hooks/registry patterns over ad hoc prop drilling.
+- Avoid exposing too many unstable internal details.
+- Think through how customization interacts with accessibility, keyboard behavior, and responsive layout.
 
-- `stackedColumnChart` is covered by `stackedBarChart`
+### Open questions for implementation
 
-## Recommended implementation order
+- What exactly does "DLS" cover in this repo today: just visual components, layout orchestration, or interaction patterns too?
+- Should customization rely on slots, render props, registry overrides, plugin hooks, or a combination?
+- Which actions belong in the engine/spec layer versus the renderer/UI layer?
+- How should custom actions be declared so they remain testable and serializable when needed?
 
-1. Continue iterating on chart polish and authoring ergonomics as new use cases appear
+### Suggested implementation breakdown
+
+1. Map the current DLS architecture and identify stable versus unstable extension seams.
+2. Define a customization model for replacing or augmenting core DLS components.
+3. Add one concrete extensibility scenario, such as contextual row actions or drag reordering.
+4. Verify that default consumers do not pay extra complexity for advanced customization support.
+5. Document extension recipes for common enterprise use cases.
+
+## 3. Enterprise renderer, template, theme, and branding support
+
+### Goal
+
+Ensure enterprise consumers can extend the platform with the capabilities they need and fully use their own renderers or templates to control color, theme, and overall presentation.
+
+### Problem to solve
+
+Even if the system becomes technically extensible, enterprise adoption will still be limited if teams cannot align reports with their existing brand systems, design tokens, component libraries, and internal UX expectations.
+
+### Desired outcome
+
+- Enterprise consumers should be able to apply their own visual language without rewriting the reporting engine.
+- Reports should feel native inside the host product.
+- The platform should support both light-touch branding and deep renderer replacement.
+
+### Requirements
+
+- Support theme customization for:
+  - colors,
+  - typography,
+  - spacing,
+  - borders/radius,
+  - density,
+  - state styling.
+- Support template or renderer overrides for key report surfaces.
+- Make it possible to use enterprise-owned renderers for widgets while preserving the reporting spec contract.
+- Define how custom themes and renderers are registered and propagated through the report tree.
+- Ensure host teams can customize:
+  - color systems,
+  - widget chrome,
+  - layout framing,
+  - empty states,
+  - interaction affordances.
+- Provide examples for integrating with an existing enterprise design system.
+
+### Design considerations
+
+- Separate data/behavior concerns from presentation concerns.
+- Prefer tokenized theming rather than scattered one-off style overrides.
+- Keep branding support compatible with the customization/extensibility work above rather than designing it as a parallel system.
+- Consider whether templates should be declarative, component-driven, or both.
+
+### Open questions for implementation
+
+- Do we want one unified extension system for renderers, templates, and theming, or separate systems with a shared registration model?
+- Should theming be package-agnostic or tightly integrated with the React UI package?
+- What is the minimum viable theming API that still supports enterprise-grade branding?
+- How do we ensure custom templates do not drift from accessibility and layout guarantees?
+
+### Suggested implementation breakdown
+
+1. Define the theming/token contract and how it reaches renderers.
+2. Identify which surfaces are templateable versus fully replaceable.
+3. Implement one end-to-end branded example using custom theme tokens and at least one overridden renderer.
+4. Add developer documentation for enterprise integration patterns.
+
+## Cross-cutting implementation guidance
+
+### Principles
+
+- Backward compatibility should be preserved for existing report specs and default renderers.
+- Extension points should be typed, documented, and intentionally limited.
+- Avoid vendor lock-in.
+- Prefer composition over forking.
+- Keep the default path simple and the advanced path powerful.
+
+### Non-goals
+
+- Do not redesign the reporting DSL unless required to unlock the extensibility model.
+- Do not hard-code support for a single third-party charting vendor as the only customization strategy.
+- Do not introduce enterprise-only behavior that makes the default open path harder to maintain.
+
+### Deliverables expected from the implementation agent
+
+- A proposed extension architecture covering charts, DLS components, and theming/renderers.
+- Code changes implementing the first thin slice of that architecture.
+- Updated documentation explaining how hosts customize the system.
+- At least one example demonstrating external chart integration and one example demonstrating DLS or renderer customization.
+- Tests covering backward compatibility and the new extension points.
+
+### Recommended execution order
+
+1. Start by defining the extension architecture and contracts.
+2. Implement the chart renderer override path first, since it is the clearest and most isolated customization need.
+3. Build DLS/component extensibility on the same extension model where possible.
+4. Layer theming/template support on top so the final system feels unified rather than fragmented.

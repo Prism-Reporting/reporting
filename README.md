@@ -20,7 +20,7 @@ React report renderer and declarative spec: build report UIs from a **ReportSpec
 
 ## Prerequisites
 
-- **Node.js** ≥ 20
+- **Node.js** ≥ 20.19
 - **pnpm** (recommended) or npm
 
 ## Getting started

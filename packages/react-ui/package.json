@@ -17,7 +17,7 @@
     "build:watch": "tsc --watch"
   },
   "dependencies": {
-    "@reporting/core": "*",
+    "@reporting/core": "workspace:*",
     "recharts": "^2.10.0"
   },
   "peerDependencies": {
