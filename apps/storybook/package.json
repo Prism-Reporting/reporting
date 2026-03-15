@@ -1,12 +1,34 @@
 {
   "name": "@reporting/storybook",
   "version": "0.1.0",
+  "description": "Storybook workspace for developing and previewing Prism Reporting UI components.",
   "private": true,
+  "author": {
+    "name": "Sargis Markosyan",
+    "email": "sargismarkosyan5@gmail.com",
+    "url": "https://www.linkedin.com/in/sargismarkosyan/"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prism-Reporting/reporting.git",
+    "directory": "apps/storybook"
+  },
+  "bugs": {
+    "url": "https://github.com/Prism-Reporting/reporting/issues"
+  },
+  "homepage": "https://github.com/Prism-Reporting/reporting/tree/main/apps/storybook",
   "scripts": {
     "dev": "storybook dev -p 6006",
     "storybook": "storybook dev -p 6006",
     "build": "tsc --noEmit && storybook build"
   },
+  "keywords": [
+    "reporting",
+    "storybook",
+    "react",
+    "ui"
+  ],
   "dependencies": {
     "@reporting/core": "workspace:*",
     "@reporting/react-ui": "workspace:*",

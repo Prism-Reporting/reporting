@@ -1,5 +1,13 @@
 # @reporting/mcp-server
 
+## Beta status
+
+`@reporting/mcp-server` is currently in beta and is still evolving quickly.
+
+- Breaking changes may happen during this phase.
+- The MCP surface should be treated as an early integration layer, not a long-term stable contract yet.
+- External pull requests are not being accepted right now; please open an issue if a workflow or capability you need is missing.
+
 MCP server that exposes tools for Prism Reporting:
 
 - **Resources** — Versioned ReportSpec guide, schema, examples, changelog, query catalog, and semantic grounding context.

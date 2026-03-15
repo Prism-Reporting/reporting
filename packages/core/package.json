@@ -1,9 +1,29 @@
 {
   "name": "@reporting/core",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.0",
+  "description": "Core ReportSpec types, validation, resolution, and reporting context contracts.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "author": {
+    "name": "Sargis Markosyan",
+    "email": "sargismarkosyan5@gmail.com",
+    "url": "https://www.linkedin.com/in/sargismarkosyan/"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prism-Reporting/reporting.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/Prism-Reporting/reporting/issues"
+  },
+  "homepage": "https://github.com/Prism-Reporting/reporting/tree/main/packages/core",
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -13,11 +33,18 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "build:watch": "tsc --watch",
+    "test": "pnpm build && node --test test/*.test.mjs"
   },
   "peerDependencies": {
     "react": "^18.0.0"
   },
+  "keywords": [
+    "reporting",
+    "dsl",
+    "validation",
+    "react"
+  ],
   "devDependencies": {
     "@types/react": "^18.2.0",
     "typescript": "^5.3.3"

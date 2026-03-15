@@ -1,9 +1,33 @@
 {
   "name": "reporting-platform",
+  "description": "Open source reporting and declarative report UIs.",
   "private": true,
   "workspaces": ["packages/*", "apps/*"],
+  "author": {
+    "name": "Sargis Markosyan",
+    "email": "sargismarkosyan5@gmail.com",
+    "url": "https://www.linkedin.com/in/sargismarkosyan/"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prism-Reporting/reporting.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Prism-Reporting/reporting/issues"
+  },
+  "homepage": "https://github.com/Prism-Reporting/reporting#readme",
+  "keywords": [
+    "reporting",
+    "react",
+    "report-renderer",
+    "declarative-ui",
+    "storybook"
+  ],
   "scripts": {
     "build": "pnpm --filter @reporting/core build && pnpm --filter @reporting/react-ui build && pnpm --filter @reporting/mcp-server build && pnpm --filter @reporting/agent-kit build",
+    "test": "pnpm --filter @reporting/core test && pnpm --filter @reporting/mcp-server test && pnpm --filter @reporting/agent-kit test",
+    "ci": "pnpm run build && pnpm run test",
     "dev": "pnpm --filter @reporting/storybook storybook",
     "storybook": "pnpm --filter @reporting/storybook storybook"
   },

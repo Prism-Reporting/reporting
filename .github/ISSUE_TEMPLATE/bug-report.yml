@@ -1,0 +1,43 @@
+name: Bug report
+description: Report a bug or regression in the reporting beta foundation.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for opening an issue. This project is very early, and issues are the right way to report missing or broken behavior right now.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is going wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction
+      description: Share the steps, inputs, or sample spec needed to reproduce the issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Package or area
+      description: Example: @reporting/core, @reporting/mcp-server, docs, Storybook
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Error output, screenshots, environment details, or links to related issues.

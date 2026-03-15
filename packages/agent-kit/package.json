@@ -1,9 +1,29 @@
 {
   "name": "@reporting/agent-kit",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.0",
+  "description": "Agent runtime helpers and report-generation tools for Prism Reporting.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "author": {
+    "name": "Sargis Markosyan",
+    "email": "sargismarkosyan5@gmail.com",
+    "url": "https://www.linkedin.com/in/sargismarkosyan/"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Prism-Reporting/reporting.git",
+    "directory": "packages/agent-kit"
+  },
+  "bugs": {
+    "url": "https://github.com/Prism-Reporting/reporting/issues"
+  },
+  "homepage": "https://github.com/Prism-Reporting/reporting/tree/main/packages/agent-kit",
+  "publishConfig": {
+    "access": "public",
+    "tag": "beta"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -17,10 +37,16 @@
     "test": "pnpm build && node --test test/*.test.js"
   },
   "dependencies": {
-    "@reporting/core": "workspace:*",
-    "@reporting/mcp-server": "workspace:*",
+    "@reporting/core": "workspace:^",
+    "@reporting/mcp-server": "workspace:^",
     "ai": "^5.0.0"
   },
+  "keywords": [
+    "reporting",
+    "ai",
+    "agent",
+    "mcp"
+  ],
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.3.3"

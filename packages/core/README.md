@@ -1,6 +1,15 @@
 # @reporting/core
 
-Core types, engine, and interfaces for the AI Reporting Platform.
+Core types, engine, and interfaces for the reporting beta foundation.
+
+## Beta status
+
+`@reporting/core` is currently in beta.
+
+- The DSL and runtime contracts are expected to evolve.
+- Breaking changes may happen without long deprecation windows during this phase.
+- This package is intended as a foundation for integrations, not a final product surface.
+- External pull requests are not being accepted right now; please open an issue if a capability you need is missing.
 
 ## ReportSpec v1
 

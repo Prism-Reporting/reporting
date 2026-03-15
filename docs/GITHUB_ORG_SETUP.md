@@ -51,3 +51,25 @@ git push -u origin main
 ```
 
 Reopen your workspace from the new paths if needed: `reporting` and `reporting-workfront-example`.
+
+## 4. Branch protection for `reporting`
+
+Apply branch protection to `main` in GitHub:
+
+- require pull requests before merging
+- require at least one approval
+- require review from CODEOWNERS
+- require status checks to pass before merging
+- use the `CI` workflow as a required status check
+- restrict direct pushes to `main`
+- restrict who can dismiss reviews
+- restrict who can push to protected branches
+
+This repo is public for visibility and issue intake, but it is not accepting unsolicited external pull requests during the current beta phase.
+
+## 5. Issue and review policy
+
+- keep issue templates enabled
+- disable blank issues so incoming reports are structured
+- use CODEOWNERS to make maintainer review explicit
+- point contributors to `CONTRIBUTING.md` for the current "issues welcome, PRs closed" policy

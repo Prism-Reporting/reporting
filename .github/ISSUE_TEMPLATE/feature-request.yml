@@ -1,0 +1,36 @@
+name: Feature request
+description: Request a missing capability or integration you need.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        External code contributions are not being accepted right now, so the best way to surface a missing capability is to open an issue with your use case.
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you need?
+      description: Describe the missing capability as clearly as you can.
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Why do you need it?
+      description: Share the workflow, integration, or product scenario this would unblock.
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Package or area
+      description: Example: @reporting/core, @reporting/agent-kit, @reporting/react-ui
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds tried
+      description: Share any workaround or adjacent approach you already explored.

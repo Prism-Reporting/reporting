@@ -1,6 +1,26 @@
-# Reporting Platform
+# Reporting Beta Foundation
 
-React report renderer and declarative spec: build report UIs from a **ReportSpec** (DSL). Use it standalone with hardcoded data or plug in your own data source or AI layer.
+Open reporting engine and AI integration foundation built around a declarative **ReportSpec** DSL. Use it standalone with hardcoded data or plug in your own data source, renderer, or agentic workflow.
+
+## Beta status
+
+This project is in a very early stage.
+
+- `@reporting/core`, `@reporting/agent-kit`, and `@reporting/mcp-server` are currently in `beta`.
+- `@reporting/react-ui` is an experimental reference UI, not a production-ready reporting surface.
+- Breaking changes may happen at any time during this phase.
+- External code contributions are not accepted right now while the architecture is still moving quickly.
+- If you really need something and it is missing, please open an issue with your use case.
+- All merges are expected to go through review and pass CI.
+
+## Stability
+
+| Package | Status | Notes |
+|------|------|------|
+| `@reporting/core` | Beta foundation | Core DSL, validation, and resolution primitives. |
+| `@reporting/agent-kit` | Beta / rapidly evolving | Main AI integration surface and prompt/runtime helpers. |
+| `@reporting/mcp-server` | Beta / rapidly evolving | MCP layer and validation/discovery tools. |
+| `@reporting/react-ui` | Experimental reference UI | Useful for demos and integration scaffolding, not yet the main differentiator. |
 
 ## Features
 
@@ -46,6 +66,8 @@ pnpm run storybook
 | Script | Description |
 |--------|-------------|
 | `build` | Build `@reporting/core`, `@reporting/react-ui`, `@reporting/mcp-server`, and `@reporting/agent-kit`. |
+| `test` | Run the package tests that currently exist for `@reporting/core`, `@reporting/mcp-server`, and `@reporting/agent-kit`. |
+| `ci` | Run the root build and test checks together. |
 | `dev` / `storybook` | Start Storybook. |
 
 ## Using the renderer
@@ -65,6 +87,16 @@ The [reporting-portfolio-example](https://github.com/Prism-Reporting/reporting-p
 - [docs/natural-language-to-spec-examples.md](docs/natural-language-to-spec-examples.md) — Example mappings from natural language to ReportSpec, including grouped tables and timeline/gantt patterns.
 - [docs/product-vision.md](docs/product-vision.md) — Project intent, open source posture, and business model direction.
 - [docs/GITHUB_ORG_SETUP.md](docs/GITHUB_ORG_SETUP.md) — Prism-Reporting org and repo setup.
+- [docs/release-process.md](docs/release-process.md) — Beta release flow, tag-based publishing, and npm publish expectations.
+
+## Contribution policy
+
+This repository is public so the direction is visible early, but we are not accepting external pull requests at this time.
+
+- Open an issue for bugs, missing capabilities, and integration blockers.
+- Include reproduction details or concrete use cases whenever possible.
+- Unsolicited PRs may be closed without review while the architecture is still changing.
+- See [CONTRIBUTING.md](CONTRIBUTING.md) for the current contribution and review policy.
 
 ## Topics
 
