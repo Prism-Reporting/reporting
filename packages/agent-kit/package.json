@@ -1,6 +1,6 @@
 {
   "name": "@prism-reporting/agent-kit",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "Agent runtime helpers and report-generation tools for Prism Reporting.",
   "type": "module",
   "main": "./dist/index.js",
