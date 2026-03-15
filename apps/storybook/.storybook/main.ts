@@ -9,6 +9,7 @@ const config: StorybookConfig = {
   },
   viteFinal: async (config) => {
     const { existsSync } = await import("fs");
+    const basePath = process.env.STORYBOOK_BASE_PATH?.trim();
     const cwd = process.cwd();
     let root = cwd;
     for (let i = 0; i < 5; i++) {
@@ -27,9 +28,9 @@ const config: StorybookConfig = {
         }));
     config.resolve.alias = [
       ...existingAliases,
-      { find: "@reporting/core", replacement: pathToCore },
-      { find: "@reporting/react-ui/style.css", replacement: pathToReactUiStyle },
-      { find: "@reporting/react-ui", replacement: pathToReactUi },
+      { find: "@prism-reporting/core", replacement: pathToCore },
+      { find: "@prism-reporting/react-ui/style.css", replacement: pathToReactUiStyle },
+      { find: "@prism-reporting/react-ui", replacement: pathToReactUi },
     ];
     config.resolve.dedupe = config.resolve.dedupe || [];
     if (!config.resolve.dedupe.includes("react")) {
@@ -38,9 +39,12 @@ const config: StorybookConfig = {
     config.optimizeDeps = config.optimizeDeps || {};
     config.optimizeDeps.exclude = [
       ...(config.optimizeDeps.exclude || []),
-      "@reporting/core",
-      "@reporting/react-ui",
+      "@prism-reporting/core",
+      "@prism-reporting/react-ui",
     ];
+    if (basePath) {
+      config.base = basePath.endsWith("/") ? basePath : `${basePath}/`;
+    }
     config.server = config.server || {};
     config.server.fs = config.server.fs || {};
     config.server.fs.allow = [

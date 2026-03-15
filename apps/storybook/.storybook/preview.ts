@@ -1,5 +1,5 @@
 import type { Preview } from "@storybook/react";
-import "@reporting/react-ui/style.css";
+import "@prism-reporting/react-ui/style.css";
 
 const preview: Preview = {
   parameters: {
