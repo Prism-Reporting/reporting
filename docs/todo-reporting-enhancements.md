@@ -176,6 +176,53 @@ Even if the system becomes technically extensible, enterprise adoption will stil
 3. Implement one end-to-end branded example using custom theme tokens and at least one overridden renderer.
 4. Add developer documentation for enterprise integration patterns.
 
+## 4. Premium offering foundation with playground-first agent workflow
+
+### Goal
+
+Start building the premium offering by creating a playground and premium agent workflow that lets teams conversationally add, test, tune, and approve reporting agents before release.
+
+### Problem to solve
+
+The repo is moving toward skills plus agent-kit as the primary app integration path, but there is not yet a premium-ready workflow for safely configuring and evaluating an agent in a controlled environment before it ships to end users.
+
+### Desired outcome
+
+- Teams should be able to open a playground, chat with a reporting agent, and iteratively improve its behavior.
+- The premium offering should provide a clear path from prototype to release-ready agent configuration.
+- Agent behavior, tools, prompts, and reporting context should be adjustable in the playground without requiring ad hoc code changes for every experiment.
+
+### Requirements
+
+- Create a premium offering roadmap that starts with a dedicated playground experience.
+- Support conversational agent setup so a user can add or configure the premium reporting agent from within the playground.
+- Make it possible to test agent behavior against realistic reporting context, query metadata, and live or representative data.
+- Allow prompt, skill, tool, and runtime-note adjustments before release.
+- Capture validation feedback, tool traces, and report-generation outcomes so agent quality can be reviewed.
+- Define a release gate so agent changes can be promoted from playground testing to production only after review.
+
+### Design considerations
+
+- The playground should reflect the real host integration as closely as possible so test results are meaningful.
+- Prefer configuration-driven agent composition over one-off hard-coded experiments.
+- Keep the premium workflow compatible with the open reporting core and agent-kit architecture.
+- Treat observability, approval flow, and rollback as first-class parts of the premium story.
+
+### Open questions for implementation
+
+- Should the playground live inside Storybook, a dedicated app, or both?
+- What parts of the premium agent should be configurable by product users versus developers?
+- How should we version prompts, skills, and tool bundles so a tested agent can be released predictably?
+- What metrics or review checklist determine that an agent is ready for release?
+
+### Suggested implementation breakdown
+
+1. Define the premium offering thin slice, starting with a reporting-agent playground.
+2. Build the playground flow for conversationally creating or updating the premium reporting agent.
+3. Add controls for editing prompts, skills, tools, and reporting context and immediately retesting them.
+4. Record validation results, traces, and qualitative notes to support agent tuning.
+5. Add a promotion workflow so a reviewed playground configuration can be marked release-ready.
+
 ## Cross-cutting implementation guidance
 
 ### Principles
