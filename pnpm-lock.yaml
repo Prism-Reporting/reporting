@@ -62,7 +62,7 @@ importers:
         version: link:../mcp-server
       ai:
         specifier: ^5.0.0
-        version: 5.0.186(zod@3.25.76)
+        version: 5.0.192(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -133,8 +133,8 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@ai-sdk/gateway@2.0.88':
-    resolution: {integrity: sha512-H62l0gxr4K0rdR2WHbvck2wOKMsocAjdZg41Exsj9Qf5/TyAuHzcNt9jKNv5t2vRFXFZaCpbC5uCCxgUC/GiaA==}
+  '@ai-sdk/gateway@2.0.93':
+    resolution: {integrity: sha512-aiWQIZIQ69HOySNRLKRPJGsmGtVpPN0qXobK6aKnm8NOEyPbZHYy2ljkSAG5tvaL/Kg015WMInG4x9t2MvnG6A==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -869,8 +869,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  ai@5.0.186:
-    resolution: {integrity: sha512-0HVwYO9k/x5eSNggqya/75uirBLjkZoL5QdNp9ftjOCl/IXWSzqys/SzsL3ifWBz603a0KbW+EZyYVtmbFJrTQ==}
+  ai@5.0.192:
+    resolution: {integrity: sha512-m46S3iEuIcX1TjNfIQf+jr2dj+vmOY6gfhj2aKZutxru1nUnRtbCFAe5pZ9mhDApOv/EpfCrWKudwQqtoMzF0g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1516,6 +1516,7 @@ packages:
   recharts@2.15.4:
     resolution: {integrity: sha512-UT/q6fwS3c1dHbXv2uFgYJ9BMFHu3fwnd7AYZaEQhXuYQ4hgsxLvsUXzGdKeZrW5xopzDCvuA2N41WJ88I7zIw==}
     engines: {node: '>=14'}
+    deprecated: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
     peerDependencies:
       react: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -1770,7 +1771,7 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@ai-sdk/gateway@2.0.88(zod@3.25.76)':
+  '@ai-sdk/gateway@2.0.93(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.3
       '@ai-sdk/provider-utils': 3.0.25(zod@3.25.76)
@@ -2377,9 +2378,9 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  ai@5.0.186(zod@3.25.76):
+  ai@5.0.192(zod@3.25.76):
     dependencies:
-      '@ai-sdk/gateway': 2.0.88(zod@3.25.76)
+      '@ai-sdk/gateway': 2.0.93(zod@3.25.76)
       '@ai-sdk/provider': 2.0.3
       '@ai-sdk/provider-utils': 3.0.25(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
