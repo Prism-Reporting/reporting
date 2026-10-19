@@ -62,7 +62,7 @@ importers:
         version: link:../mcp-server
       ai:
         specifier: ^5.0.0
-        version: 5.0.273(zod@3.25.76)
+        version: 5.0.277(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: ^20.0.0
@@ -133,8 +133,8 @@ packages:
   '@adobe/css-tools@4.4.4':
     resolution: {integrity: sha512-Elp+iwUx5rN5+Y8xLt5/GRoG20WGoDCQ/1Fb+1LiGtvwbDavuSk0jhD/eZdckHAuzcDzccnkv+rEjyWfRx18gg==}
 
-  '@ai-sdk/gateway@2.0.164':
-    resolution: {integrity: sha512-pol4Klaj4v1sO7s5P3L5NXfNPVLBBwseRzUGjs7gge4TMTK3Xdsu7CqiVzLVCFU7bCbm+mMy7TTxiL1Qkmw/6Q==}
+  '@ai-sdk/gateway@2.0.168':
+    resolution: {integrity: sha512-mX6iGOVs79OgIFPqHjBqXf8XGtaDp1np4ZS3uTiYleoNs7XSuKYb6ylHMuUQLVJrx0qtFy3ZsKvHmC0FPY/ZLw==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -894,8 +894,8 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  ai@5.0.273:
-    resolution: {integrity: sha512-/rVEn93YcPAugzgKBJykrlWM/lPZuASrG+qvyjbV42/DJb0rEBJa7kg3wC/aKhdxGPppr8+O/pOdpYcXjtsDCQ==}
+  ai@5.0.277:
+    resolution: {integrity: sha512-qt5LR/P7K+2a8npyJLID49i2y2gYj2BDoyxJf9S1fZKf3CgItp4l0LacY099OyJ6z64Ywujv/+iMgdQgVExdsQ==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -1800,7 +1800,7 @@ snapshots:
 
   '@adobe/css-tools@4.4.4': {}
 
-  '@ai-sdk/gateway@2.0.164(zod@3.25.76)':
+  '@ai-sdk/gateway@2.0.168(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.5
       '@ai-sdk/provider-utils': 3.0.41(zod@3.25.76)
@@ -2418,9 +2418,9 @@ snapshots:
 
   acorn@8.16.0: {}
 
-  ai@5.0.273(zod@3.25.76):
+  ai@5.0.277(zod@3.25.76):
     dependencies:
-      '@ai-sdk/gateway': 2.0.164(zod@3.25.76)
+      '@ai-sdk/gateway': 2.0.168(zod@3.25.76)
       '@ai-sdk/provider': 2.0.5
       '@ai-sdk/provider-utils': 3.0.41(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
